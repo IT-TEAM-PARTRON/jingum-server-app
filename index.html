@@ -542,7 +542,39 @@ async function apiFetchAll() {
   return res.json();
 }
 
-async function refreshFromServer() {
+/* Preserves any not-yet-saved text the person is mid-typing across a
+   background re-render (the 20s poll), so it isn't silently wiped out. */
+function snapshotFormValues() {
+  const snap = {};
+  document.querySelectorAll("#content [id]").forEach((el) => {
+    if (el.tagName === "INPUT" || el.tagName === "SELECT" || el.tagName === "TEXTAREA") {
+      snap["id:" + el.id] = el.value;
+    }
+  });
+  document.querySelectorAll("#content .pmBucket[data-bucket]").forEach((el) => {
+    snap["bucket:" + el.dataset.bucket] = el.value;
+  });
+  document.querySelectorAll("#content .targetInput[data-target]").forEach((el) => {
+    snap["target:" + el.dataset.target] = el.value;
+  });
+  return snap;
+}
+function restoreFormValues(snap) {
+  if (!snap) return;
+  Object.keys(snap).forEach((key) => {
+    const val = snap[key];
+    if (val === "" || val === null || val === undefined) return;
+    let el = null;
+    if (key.startsWith("id:")) el = document.getElementById(key.slice(3));
+    else if (key.startsWith("bucket:")) el = document.querySelector('.pmBucket[data-bucket="' + key.slice(7) + '"]');
+    else if (key.startsWith("target:")) el = document.querySelector('.targetInput[data-target="' + key.slice(7) + '"]');
+    // Only fill fields the fresh render left blank — never override real data.
+    if (el && (el.value === "" || el.value === null)) el.value = val;
+  });
+}
+
+async function refreshFromServer(preserveForm) {
+  const snap = preserveForm ? snapshotFormValues() : null;
   try {
     const data = await apiFetchAll();
     CACHE.production_normal = data.production_normal || {};
@@ -557,15 +589,17 @@ async function refreshFromServer() {
     STATE.dbReady = false;
   }
   render();
+  if (snap) restoreFormValues(snap);
 }
 
 /* Polls the server periodically so other people's entries show up without
    a manual refresh. 20s is a reasonable balance for a small internal tool;
-   raise the interval if this ever runs on a slow link. */
+   raise the interval if this ever runs on a slow link. Passes preserveForm
+   so an in-progress, not-yet-saved entry survives this background redraw. */
 async function initDb() {
-  await refreshFromServer();
+  await refreshFromServer(false);
   if (pollTimer) clearInterval(pollTimer);
-  pollTimer = setInterval(refreshFromServer, 20000);
+  pollTimer = setInterval(() => refreshFromServer(true), 20000);
 }
 
 async function dbSet(collection, docId, data) {
