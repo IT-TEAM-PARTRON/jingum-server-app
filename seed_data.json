@@ -1,0 +1,1002 @@
+[
+  {
+    "collection": "production_normal",
+    "doc_id": "2026-08-19",
+    "data": {
+      "date": "2026-08-19",
+      "input": 29392,
+      "ok": 29392,
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "production_normal",
+    "doc_id": "2026-09-03",
+    "data": {
+      "date": "2026-09-03",
+      "input": 14406,
+      "ok": 14102,
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "production_normal",
+    "doc_id": "2026-09-04",
+    "data": {
+      "date": "2026-09-04",
+      "input": 9812,
+      "ok": 9575,
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "production_normal",
+    "doc_id": "2026-09-09",
+    "data": {
+      "date": "2026-09-09",
+      "input": 8730,
+      "ok": 8578,
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "production_normal",
+    "doc_id": "2026-09-10",
+    "data": {
+      "date": "2026-09-10",
+      "input": 11383,
+      "ok": 11231,
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "production_normal",
+    "doc_id": "2026-09-11",
+    "data": {
+      "date": "2026-09-11",
+      "input": 10560,
+      "ok": 10412,
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "production_normal",
+    "doc_id": "2026-09-12",
+    "data": {
+      "date": "2026-09-12",
+      "input": 9954,
+      "ok": 9776,
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "production_normal",
+    "doc_id": "2026-09-14",
+    "data": {
+      "date": "2026-09-14",
+      "input": 10891,
+      "ok": 10718,
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "production_normal",
+    "doc_id": "2026-09-15",
+    "data": {
+      "date": "2026-09-15",
+      "input": 10416,
+      "ok": 10259,
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "production_normal",
+    "doc_id": "2026-09-16",
+    "data": {
+      "date": "2026-09-16",
+      "input": 10750,
+      "ok": 10558,
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "production_normal",
+    "doc_id": "2026-09-17",
+    "data": {
+      "date": "2026-09-17",
+      "input": 10746,
+      "ok": 10586,
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "production_normal",
+    "doc_id": "2026-09-18",
+    "data": {
+      "date": "2026-09-18",
+      "input": 10065,
+      "ok": 9902,
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "production_normal",
+    "doc_id": "2026-09-19",
+    "data": {
+      "date": "2026-09-19",
+      "input": 11770,
+      "ok": 11538,
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "production_normal",
+    "doc_id": "2026-09-21",
+    "data": {
+      "date": "2026-09-21",
+      "input": 11292,
+      "ok": 11048,
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "production_decap",
+    "doc_id": "2026-08-19",
+    "data": {
+      "date": "2026-08-19",
+      "input": 47360,
+      "ok": 45788,
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "production_decap",
+    "doc_id": "2026-09-08",
+    "data": {
+      "date": "2026-09-08",
+      "input": 6872,
+      "ok": 6704,
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "production_decap",
+    "doc_id": "2026-09-09",
+    "data": {
+      "date": "2026-09-09",
+      "input": 4811,
+      "ok": 4569,
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "production_decap",
+    "doc_id": "2026-09-10",
+    "data": {
+      "date": "2026-09-10",
+      "input": 5120,
+      "ok": 4914,
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "production_decap",
+    "doc_id": "2026-09-11",
+    "data": {
+      "date": "2026-09-11",
+      "input": 4664,
+      "ok": 4513,
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "production_decap",
+    "doc_id": "2026-09-12",
+    "data": {
+      "date": "2026-09-12",
+      "input": 5120,
+      "ok": 4996,
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "production_decap",
+    "doc_id": "2026-09-14",
+    "data": {
+      "date": "2026-09-14",
+      "input": 3333,
+      "ok": 3228,
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "production_decap",
+    "doc_id": "2026-09-15",
+    "data": {
+      "date": "2026-09-15",
+      "input": 3520,
+      "ok": 3394,
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "production_decap",
+    "doc_id": "2026-09-16",
+    "data": {
+      "date": "2026-09-16",
+      "input": 3860,
+      "ok": 3751,
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "production_decap",
+    "doc_id": "2026-09-17",
+    "data": {
+      "date": "2026-09-17",
+      "input": 3768,
+      "ok": 3619,
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "production_decap",
+    "doc_id": "2026-09-18",
+    "data": {
+      "date": "2026-09-18",
+      "input": 4160,
+      "ok": 4008,
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "production_decap",
+    "doc_id": "2026-09-19",
+    "data": {
+      "date": "2026-09-19",
+      "input": 2880,
+      "ok": 2718,
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "production_decap",
+    "doc_id": "2026-09-21",
+    "data": {
+      "date": "2026-09-21",
+      "input": 3520,
+      "ok": 3076,
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "pmSelection",
+    "doc_id": "2026-08-21__bracket_o",
+    "data": {
+      "date": "2026-08-21",
+      "caseId": "bracket_o",
+      "input": 8205,
+      "buckets": {
+        "ge34": 581,
+        "r30_34": 1173,
+        "r28_30": 625,
+        "r25_28": 3354,
+        "r23_25": 1516,
+        "lt23": 956
+      },
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "pmSelection",
+    "doc_id": "2026-08-22__bracket_o",
+    "data": {
+      "date": "2026-08-22",
+      "caseId": "bracket_o",
+      "input": 13012,
+      "buckets": {
+        "ge34": 785,
+        "r30_34": 1591,
+        "r28_30": 2161,
+        "r25_28": 4724,
+        "r23_25": 2082,
+        "lt23": 1669
+      },
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "pmSelection",
+    "doc_id": "2026-08-23__bracket_o",
+    "data": {
+      "date": "2026-08-23",
+      "caseId": "bracket_o",
+      "input": 14174,
+      "buckets": {
+        "ge34": 517,
+        "r30_34": 2596,
+        "r28_30": 2546,
+        "r25_28": 3360,
+        "r23_25": 3268,
+        "lt23": 1887
+      },
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "pmSelection",
+    "doc_id": "2026-08-24__bracket_o",
+    "data": {
+      "date": "2026-08-24",
+      "caseId": "bracket_o",
+      "input": 14096,
+      "buckets": {
+        "ge34": 1024,
+        "r30_34": 2299,
+        "r28_30": 2329,
+        "r25_28": 3114,
+        "r23_25": 3017,
+        "lt23": 2313
+      },
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "pmSelection",
+    "doc_id": "2026-08-25__bracket_o",
+    "data": {
+      "date": "2026-08-25",
+      "caseId": "bracket_o",
+      "input": 14234,
+      "buckets": {
+        "ge34": 1492,
+        "r30_34": 1385,
+        "r28_30": 1650,
+        "r25_28": 5969,
+        "r23_25": 1922,
+        "lt23": 1816
+      },
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "pmSelection",
+    "doc_id": "2026-08-26__bracket_o",
+    "data": {
+      "date": "2026-08-26",
+      "caseId": "bracket_o",
+      "input": 14112,
+      "buckets": {
+        "ge34": 776,
+        "r30_34": 1852,
+        "r28_30": 2086,
+        "r25_28": 4547,
+        "r23_25": 2637,
+        "lt23": 2214
+      },
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "pmSelection",
+    "doc_id": "2026-08-27__bracket_o",
+    "data": {
+      "date": "2026-08-27",
+      "caseId": "bracket_o",
+      "input": 14225,
+      "buckets": {
+        "ge34": 818,
+        "r30_34": 1930,
+        "r28_30": 2049,
+        "r25_28": 4625,
+        "r23_25": 2849,
+        "lt23": 1954
+      },
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "pmSelection",
+    "doc_id": "2026-08-28__bracket_o",
+    "data": {
+      "date": "2026-08-28",
+      "caseId": "bracket_o",
+      "input": 6380,
+      "buckets": {
+        "ge34": 580,
+        "r30_34": 874,
+        "r28_30": 617,
+        "r25_28": 1686,
+        "r23_25": 1375,
+        "lt23": 1248
+      },
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "pmSelection",
+    "doc_id": "2026-08-28__bracket_x",
+    "data": {
+      "date": "2026-08-28",
+      "caseId": "bracket_x",
+      "input": 8706,
+      "buckets": {
+        "ge34": 857,
+        "r30_34": 1227,
+        "r28_30": 1093,
+        "r25_28": 2273,
+        "r23_25": 1554,
+        "lt23": 1702
+      },
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "pmSelection",
+    "doc_id": "2026-08-29__bracket_x",
+    "data": {
+      "date": "2026-08-29",
+      "caseId": "bracket_x",
+      "input": 12711,
+      "buckets": {
+        "ge34": 1514,
+        "r30_34": 1935,
+        "r28_30": 1710,
+        "r25_28": 3227,
+        "r23_25": 2145,
+        "lt23": 2180
+      },
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "pmSelection",
+    "doc_id": "2026-08-30__bracket_x",
+    "data": {
+      "date": "2026-08-30",
+      "caseId": "bracket_x",
+      "input": 14169,
+      "buckets": {
+        "ge34": 1608,
+        "r30_34": 2107,
+        "r28_30": 1991,
+        "r25_28": 3664,
+        "r23_25": 2393,
+        "lt23": 2406
+      },
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "pmSelection",
+    "doc_id": "2026-08-31__bracket_x",
+    "data": {
+      "date": "2026-08-31",
+      "caseId": "bracket_x",
+      "input": 7002,
+      "buckets": {
+        "ge34": 810,
+        "r30_34": 1080,
+        "r28_30": 900,
+        "r25_28": 1838,
+        "r23_25": 1216,
+        "lt23": 1158
+      },
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "pmSelection",
+    "doc_id": "2026-09-03__bracket_x",
+    "data": {
+      "date": "2026-09-03",
+      "caseId": "bracket_x",
+      "input": 14257,
+      "buckets": {
+        "ge34": 1667,
+        "r30_34": 2061,
+        "r28_30": 1811,
+        "r25_28": 3713,
+        "r23_25": 2491,
+        "lt23": 2514
+      },
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "pmSelection",
+    "doc_id": "2026-09-04__bracket_x",
+    "data": {
+      "date": "2026-09-04",
+      "caseId": "bracket_x",
+      "input": 14313,
+      "buckets": {
+        "ge34": 1847,
+        "r30_34": 2191,
+        "r28_30": 2096,
+        "r25_28": 3513,
+        "r23_25": 2412,
+        "lt23": 2254
+      },
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "pmSelection",
+    "doc_id": "2026-09-05__bracket_x",
+    "data": {
+      "date": "2026-09-05",
+      "caseId": "bracket_x",
+      "input": 14009,
+      "buckets": {
+        "ge34": 1919,
+        "r30_34": 2176,
+        "r28_30": 1947,
+        "r25_28": 3537,
+        "r23_25": 2216,
+        "lt23": 2214
+      },
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "pmSelection",
+    "doc_id": "2026-09-07__bracket_x",
+    "data": {
+      "date": "2026-09-07",
+      "caseId": "bracket_x",
+      "input": 14137,
+      "buckets": {
+        "ge34": 2324,
+        "r30_34": 2345,
+        "r28_30": 1904,
+        "r25_28": 3599,
+        "r23_25": 2066,
+        "lt23": 1899
+      },
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "pmSelection",
+    "doc_id": "2026-09-08__bracket_x",
+    "data": {
+      "date": "2026-09-08",
+      "caseId": "bracket_x",
+      "input": 14247,
+      "buckets": {
+        "ge34": 2160,
+        "r30_34": 1981,
+        "r28_30": 1748,
+        "r25_28": 3518,
+        "r23_25": 2502,
+        "lt23": 2338
+      },
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "pmSelection",
+    "doc_id": "2026-09-09__bracket_x",
+    "data": {
+      "date": "2026-09-09",
+      "caseId": "bracket_x",
+      "input": 14124,
+      "buckets": {
+        "ge34": 1821,
+        "r30_34": 1872,
+        "r28_30": 1816,
+        "r25_28": 3680,
+        "r23_25": 2601,
+        "lt23": 2334
+      },
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "pmSelection",
+    "doc_id": "2026-09-10__bracket_x",
+    "data": {
+      "date": "2026-09-10",
+      "caseId": "bracket_x",
+      "input": 14499,
+      "buckets": {
+        "ge34": 1635,
+        "r30_34": 1897,
+        "r28_30": 1848,
+        "r25_28": 3638,
+        "r23_25": 2718,
+        "lt23": 2763
+      },
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "pmSelection",
+    "doc_id": "2026-09-11__bracket_x",
+    "data": {
+      "date": "2026-09-11",
+      "caseId": "bracket_x",
+      "input": 14277,
+      "buckets": {
+        "ge34": 1780,
+        "r30_34": 2037,
+        "r28_30": 1808,
+        "r25_28": 3704,
+        "r23_25": 2520,
+        "lt23": 2428
+      },
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "pmSelection",
+    "doc_id": "2026-09-12__bracket_x",
+    "data": {
+      "date": "2026-09-12",
+      "caseId": "bracket_x",
+      "input": 14296,
+      "buckets": {
+        "ge34": 1942,
+        "r30_34": 2206,
+        "r28_30": 1844,
+        "r25_28": 3772,
+        "r23_25": 2391,
+        "lt23": 2141
+      },
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "pmSelection",
+    "doc_id": "2026-09-14__bracket_x",
+    "data": {
+      "date": "2026-09-14",
+      "caseId": "bracket_x",
+      "input": 14243,
+      "buckets": {
+        "ge34": 1949,
+        "r30_34": 2213,
+        "r28_30": 1950,
+        "r25_28": 3700,
+        "r23_25": 2377,
+        "lt23": 2054
+      },
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "pmSelection",
+    "doc_id": "2026-09-15__bracket_x",
+    "data": {
+      "date": "2026-09-15",
+      "caseId": "bracket_x",
+      "input": 14355,
+      "buckets": {
+        "ge34": 2042,
+        "r30_34": 2077,
+        "r28_30": 1875,
+        "r25_28": 3597,
+        "r23_25": 2216,
+        "lt23": 2548
+      },
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "pmSelection",
+    "doc_id": "2026-09-16__bracket_x",
+    "data": {
+      "date": "2026-09-16",
+      "caseId": "bracket_x",
+      "input": 14460,
+      "buckets": {
+        "ge34": 2502,
+        "r30_34": 2091,
+        "r28_30": 1998,
+        "r25_28": 3630,
+        "r23_25": 2268,
+        "lt23": 1971
+      },
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "pmSelection",
+    "doc_id": "2026-09-17__bracket_x",
+    "data": {
+      "date": "2026-09-17",
+      "caseId": "bracket_x",
+      "input": 14974,
+      "buckets": {
+        "ge34": 2308,
+        "r30_34": 2657,
+        "r28_30": 1944,
+        "r25_28": 3873,
+        "r23_25": 2351,
+        "lt23": 1841
+      },
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "pmSelection",
+    "doc_id": "2026-09-18__bracket_x",
+    "data": {
+      "date": "2026-09-18",
+      "caseId": "bracket_x",
+      "input": 7578,
+      "buckets": {
+        "ge34": 785,
+        "r30_34": 1011,
+        "r28_30": 1061,
+        "r25_28": 1231,
+        "r23_25": 1147,
+        "lt23": 2343
+      },
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "pmSelection",
+    "doc_id": "2026-09-18__oqc_67",
+    "data": {
+      "date": "2026-09-18",
+      "caseId": "oqc_67",
+      "input": 9104,
+      "buckets": {
+        "ge34": 487,
+        "r30_34": 917,
+        "r28_30": 1508,
+        "r25_28": 2547,
+        "r23_25": 2503,
+        "lt23": 1142
+      },
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "pmSelection",
+    "doc_id": "2026-09-21__oqc_67",
+    "data": {
+      "date": "2026-09-21",
+      "caseId": "oqc_67",
+      "input": 7081,
+      "buckets": {
+        "ge34": 4956,
+        "r30_34": 978,
+        "r28_30": 445,
+        "r25_28": 470,
+        "r23_25": 149,
+        "lt23": 83
+      },
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "pmSelection",
+    "doc_id": "2026-09-19__co2",
+    "data": {
+      "date": "2026-09-19",
+      "caseId": "co2",
+      "input": 14242,
+      "buckets": {
+        "ge34": 2522,
+        "r30_34": 3298,
+        "r28_30": 2617,
+        "r25_28": 3576,
+        "r23_25": 1466,
+        "lt23": 763
+      },
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "pmSelection",
+    "doc_id": "2026-09-21__co2",
+    "data": {
+      "date": "2026-09-21",
+      "caseId": "co2",
+      "input": 5896,
+      "buckets": {
+        "ge34": 1887,
+        "r30_34": 1445,
+        "r28_30": 1030,
+        "r25_28": 1047,
+        "r23_25": 317,
+        "lt23": 170
+      },
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "shipment",
+    "doc_id": "2026-08-24__regular__SEVT",
+    "data": {
+      "date": "2026-08-24",
+      "type": "regular",
+      "site": "SEVT",
+      "normal": 1192,
+      "resort67": 0,
+      "decapRework": 0,
+      "sortRework": 0,
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "shipment",
+    "doc_id": "2026-08-27__rma__GUMI",
+    "data": {
+      "date": "2026-08-27",
+      "type": "rma",
+      "site": "GUMI",
+      "normal": 0,
+      "resort67": 1705,
+      "decapRework": 0,
+      "sortRework": 0,
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "shipment",
+    "doc_id": "2026-08-31__rma__SEVT",
+    "data": {
+      "date": "2026-08-31",
+      "type": "rma",
+      "site": "SEVT",
+      "normal": 15360,
+      "resort67": 139959,
+      "decapRework": 0,
+      "sortRework": 0,
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "shipment",
+    "doc_id": "2026-09-07__claim__SEVT",
+    "data": {
+      "date": "2026-09-07",
+      "type": "claim",
+      "site": "SEVT",
+      "normal": 37539,
+      "resort67": 107101,
+      "decapRework": 21337,
+      "sortRework": 0,
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "shipment",
+    "doc_id": "2026-09-08__rma__SEV",
+    "data": {
+      "date": "2026-09-08",
+      "type": "rma",
+      "site": "SEV",
+      "normal": 0,
+      "resort67": 0,
+      "decapRework": 4622,
+      "sortRework": 0,
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "shipment",
+    "doc_id": "2026-09-09__regular__SEVT",
+    "data": {
+      "date": "2026-09-09",
+      "type": "regular",
+      "site": "SEVT",
+      "normal": 0,
+      "resort67": 0,
+      "decapRework": 15360,
+      "sortRework": 0,
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "shipment",
+    "doc_id": "2026-09-10__regular__SEVT",
+    "data": {
+      "date": "2026-09-10",
+      "type": "regular",
+      "site": "SEVT",
+      "normal": 0,
+      "resort67": 0,
+      "decapRework": 15360,
+      "sortRework": 0,
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "shipment",
+    "doc_id": "2026-09-11__regular__SEVT",
+    "data": {
+      "date": "2026-09-11",
+      "type": "regular",
+      "site": "SEVT",
+      "normal": 10240,
+      "resort67": 0,
+      "decapRework": 5120,
+      "sortRework": 0,
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "shipment",
+    "doc_id": "2026-09-12__regular__SEVT",
+    "data": {
+      "date": "2026-09-12",
+      "type": "regular",
+      "site": "SEVT",
+      "normal": 10240,
+      "resort67": 0,
+      "decapRework": 5120,
+      "sortRework": 0,
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "shipment",
+    "doc_id": "2026-09-18__regular__SEVT",
+    "data": {
+      "date": "2026-09-18",
+      "type": "regular",
+      "site": "SEVT",
+      "normal": 27840,
+      "resort67": 0,
+      "decapRework": 12160,
+      "sortRework": 0,
+      "updatedAt": "2026-09-22T11:23:16.391172Z"
+    }
+  },
+  {
+    "collection": "meta",
+    "doc_id": "targets",
+    "data": {
+      "decap": 47360,
+      "pm_bracket_o": 98438,
+      "pm_bracket_x": 236357,
+      "pm_oqc_67": 20468,
+      "pm_co2": 22200,
+      "pm_customer_return": 327149
+    }
+  },
+  {
+    "collection": "pmSelection",
+    "doc_id": "2026-08-20__oqc_67",
+    "data": {
+      "date": "2026-08-20",
+      "caseId": "oqc_67",
+      "input": 3635,
+      "scrap": 648,
+      "buckets": {
+        "ge34": 0,
+        "r30_34": 0,
+        "r28_30": 0,
+        "r25_28": 0,
+        "r23_25": 0,
+        "lt23": 3635
+      },
+      "updatedAt": "2026-09-22T12:00:00.000Z"
+    }
+  },
+  {
+    "collection": "pmSelection",
+    "doc_id": "2026-08-20__co2",
+    "data": {
+      "date": "2026-08-20",
+      "caseId": "co2",
+      "input": 2058,
+      "scrap": 4,
+      "buckets": {
+        "ge34": 0,
+        "r30_34": 0,
+        "r28_30": 0,
+        "r25_28": 0,
+        "r23_25": 0,
+        "lt23": 2058
+      },
+      "updatedAt": "2026-09-22T12:00:00.000Z"
+    }
+  }
+]

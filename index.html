@@ -1,0 +1,1592 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>재검 진행 상황 트래킹</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📋</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&family=Noto+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+/* ============ Design tokens ============ */
+:root{
+  --bg:#F3F4EF;
+  --surface:#FFFFFF;
+  --surface-2:#EAEDE5;
+  --ink:#1B231F;
+  --ink-soft:#5B675F;
+  --ink-faint:#8C978E;
+  --line:#D9DDD2;
+  --line-strong:#C2C9B9;
+  --primary:#0E6B57;
+  --primary-dark:#0A5445;
+  --primary-soft:#E1EFE9;
+  --accent:#C2701F;
+  --accent-soft:#F6E9D8;
+  --danger:#B03A2E;
+  --danger-soft:#F7E4E1;
+  --ok:#1E7D47;
+  --radius-s:4px;
+  --radius-m:8px;
+  --shadow-1: 0 1px 2px rgba(20,30,24,0.06), 0 1px 1px rgba(20,30,24,0.04);
+  --font: 'Noto Sans KR','Noto Sans',sans-serif;
+  box-sizing:border-box;
+  padding-top: env(safe-area-inset-top,0px);
+  padding-bottom: env(safe-area-inset-bottom,0px);
+}
+:root:not([data-theme="light"]){
+  @media (prefers-color-scheme: dark){
+    --bg:#141815;
+    --surface:#1C211D;
+    --surface-2:#242A24;
+    --ink:#EDF1EA;
+    --ink-soft:#AEB8AC;
+    --ink-faint:#7A857B;
+    --line:#323930;
+    --line-strong:#3E463C;
+    --primary:#3FAE8E;
+    --primary-dark:#2E8F73;
+    --primary-soft:#1D3129;
+    --accent:#E0995A;
+    --accent-soft:#3A2E1D;
+    --danger:#E17A6C;
+    --danger-soft:#3A2320;
+    --ok:#5CC98A;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#141815;
+  --surface:#1C211D;
+  --surface-2:#242A24;
+  --ink:#EDF1EA;
+  --ink-soft:#AEB8AC;
+  --ink-faint:#7A857B;
+  --line:#323930;
+  --line-strong:#3E463C;
+  --primary:#3FAE8E;
+  --primary-dark:#2E8F73;
+  --primary-soft:#1D3129;
+  --accent:#E0995A;
+  --accent-soft:#3A2E1D;
+  --danger:#E17A6C;
+  --danger-soft:#3A2320;
+  --ok:#5CC98A;
+}
+*{box-sizing:border-box;}
+html,body{height:100%;}
+html{scroll-padding-top: env(safe-area-inset-top,0px);}
+body{
+  margin:0; background:var(--bg); color:var(--ink); font-family:var(--font);
+  font-feature-settings:"tnum" 1; -webkit-font-smoothing:antialiased;
+  min-height:100%;
+}
+#app{max-width:1180px; margin:0 auto; padding:16px 16px 64px;}
+h1,h2,h3{margin:0; font-weight:700; letter-spacing:-0.01em;}
+button{font-family:inherit; cursor:pointer;}
+input,select,textarea{font-family:inherit;}
+
+/* ---- header ---- */
+.topbar{
+  position:sticky; top:env(safe-area-inset-top,0px); z-index:20;
+  background:var(--bg); padding:14px 0 10px; margin-bottom:8px;
+  border-bottom:1px solid var(--line);
+}
+.topbar-row{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;}
+.brand{display:flex; align-items:baseline; gap:8px;}
+.brand .mark{
+  width:10px;height:10px;border-radius:2px;background:var(--primary); display:inline-block;
+  transform: rotate(45deg); flex-shrink:0;
+}
+.brand h1{font-size:17px;}
+.brand small{color:var(--ink-faint); font-size:12px; font-weight:500;}
+.lang-toggle{
+  display:flex; background:var(--surface-2); border-radius:999px; padding:3px; gap:2px;
+  border:1px solid var(--line);
+}
+.lang-toggle button{
+  border:none; background:transparent; padding:6px 12px; border-radius:999px; font-size:12.5px;
+  font-weight:600; color:var(--ink-soft);
+}
+.lang-toggle button.active{background:var(--surface); color:var(--primary); box-shadow:var(--shadow-1);}
+.tabs{display:flex; gap:6px; margin-top:12px; overflow-x:auto; padding-bottom:2px;}
+.tabs button{
+  border:1px solid var(--line); background:var(--surface); color:var(--ink-soft);
+  padding:8px 14px; border-radius:999px; font-size:13px; font-weight:600; white-space:nowrap;
+  transition:.12s;
+}
+.tabs button.active{background:var(--ink); color:var(--surface); border-color:var(--ink);}
+:root[data-theme="dark"] .tabs button.active, .tabs button.active { background:var(--primary); border-color:var(--primary); color:#fff;}
+
+/* ---- layout helpers ---- */
+.section{margin-top:18px;}
+.section-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; gap:10px; flex-wrap:wrap;}
+.section-head h2{font-size:15px;}
+.muted{color:var(--ink-faint); font-size:12.5px;}
+.card{
+  background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-m);
+  padding:16px; box-shadow:var(--shadow-1);
+}
+.grid{display:grid; gap:12px;}
+.grid.cols-2{grid-template-columns:repeat(2,1fr);}
+.grid.cols-3{grid-template-columns:repeat(3,1fr);}
+@media (max-width:720px){ .grid.cols-2, .grid.cols-3{grid-template-columns:1fr;} }
+
+/* ---- form elements ---- */
+.field{display:flex; flex-direction:column; gap:5px;}
+.field label{font-size:12.5px; font-weight:600; color:var(--ink-soft);}
+.field input[type=text],.field input[type=number],.field input[type=date],.field select,.field textarea{
+  border:1px solid var(--line-strong); background:var(--surface); color:var(--ink);
+  border-radius:var(--radius-s); padding:9px 10px; font-size:14.5px; width:100%;
+}
+.field textarea{resize:vertical; min-height:64px;}
+.field input:focus,.field select:focus,.field textarea:focus{outline:2px solid var(--primary); outline-offset:1px; border-color:var(--primary);}
+.field .hint{font-size:11.5px; color:var(--ink-faint);}
+.field-row{display:grid; grid-template-columns:repeat(auto-fit,minmax(110px,1fr)); gap:10px;}
+
+.btn{
+  border-radius:var(--radius-s); border:1px solid var(--line-strong); background:var(--surface);
+  color:var(--ink); padding:9px 16px; font-size:13.5px; font-weight:600;
+}
+.btn.primary{background:var(--primary); border-color:var(--primary); color:#fff;}
+.btn.primary:hover{background:var(--primary-dark);}
+.btn.ghost{border-color:transparent; background:transparent; color:var(--ink-soft);}
+.btn.danger{color:var(--danger); border-color:var(--danger-soft); background:var(--danger-soft);}
+.btn:disabled{opacity:.45; cursor:not-allowed;}
+.btn.small{padding:5px 10px; font-size:12px;}
+
+.category-tabs{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px;}
+.category-tabs button{
+  border:1px solid var(--line); background:var(--surface); padding:9px 14px; border-radius:var(--radius-s);
+  font-size:13px; font-weight:600; color:var(--ink-soft); border-left:3px solid transparent;
+}
+.category-tabs button.active{border-left-color:var(--primary); color:var(--ink); background:var(--primary-soft);}
+
+.entry-table{width:100%; border-collapse:collapse; font-size:13px; margin-top:4px;}
+.entry-table th,.entry-table td{padding:8px 9px; border-bottom:1px solid var(--line); text-align:right;}
+.entry-table th:first-child,.entry-table td:first-child{text-align:left;}
+.entry-table th{color:var(--ink-faint); font-weight:600; font-size:11.5px; text-transform:none;}
+.entry-table tbody tr:hover{background:var(--surface-2);}
+.pill{display:inline-block; padding:2px 8px; border-radius:999px; background:var(--surface-2); font-size:11px; font-weight:600; color:var(--ink-soft);}
+.pill.warn{background:var(--accent-soft); color:var(--accent);}
+
+.empty-row{color:var(--ink-faint); font-size:13px; padding:18px 4px; text-align:center;}
+
+/* ---- summary cards ---- */
+.stat-card{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-m); padding:14px 16px; box-shadow:var(--shadow-1);}
+.stat-card .label{font-size:12px; color:var(--ink-faint); font-weight:600; margin-bottom:4px;}
+.stat-card .value{font-size:22px; font-weight:700; letter-spacing:-0.02em;}
+.stat-card .sub{font-size:11.5px; color:var(--ink-faint); margin-top:4px;}
+.progress-bar{height:6px; border-radius:99px; background:var(--surface-2); overflow:hidden; margin-top:8px;}
+.progress-bar > div{height:100%; background:var(--primary); border-radius:99px;}
+
+.case-card{border:1px solid var(--line); border-radius:var(--radius-m); background:var(--surface); padding:14px; box-shadow:var(--shadow-1);}
+.case-card .case-title{font-size:13.5px; font-weight:700; margin-bottom:2px;}
+.case-card .case-updated{font-size:11px; color:var(--ink-faint); margin-bottom:10px;}
+.mini-grid{display:grid; grid-template-columns:1fr 1fr; gap:5px 10px; font-size:12.5px;}
+.mini-grid div.k{color:var(--ink-faint);}
+.mini-grid div.v{font-weight:700; text-align:right;}
+.mini-grid div.k.wide{grid-column:1 / -1; margin-top:2px; padding-top:5px; border-top:1px dashed var(--line);}
+
+.target-edit{display:flex; align-items:center; gap:6px;}
+.target-edit input{width:96px; text-align:right;}
+
+/* ---- report view ---- */
+#reportCapture{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-m); padding:24px; box-shadow:var(--shadow-1);}
+.report-title{font-size:19px; font-weight:800; margin-bottom:2px;}
+.report-date{font-size:12.5px; color:var(--ink-faint); margin-bottom:18px;}
+.report-block{margin-bottom:18px;}
+.report-block h3{font-size:13.5px; margin-bottom:8px; padding-bottom:6px; border-bottom:2px solid var(--ink);}
+table.report-table{width:100%; border-collapse:collapse; font-size:12.5px; min-width:520px;}
+table.report-table th,table.report-table td{border:1px solid var(--line); padding:6px 8px; text-align:right;}
+table.report-table th:first-child,table.report-table td:first-child{text-align:left;}
+table.report-table th{background:var(--surface-2); font-weight:700;}
+table.report-table tr.total-row td{font-weight:700; background:var(--surface-2);}
+tr.total-row td{font-weight:700; background:var(--surface-2);}
+.report-cols{display:grid; grid-template-columns:repeat(3,1fr); gap:16px;}
+@media (max-width:820px){ .report-cols{grid-template-columns:1fr;} }
+.report-col-title{font-size:13px; font-weight:700; margin-bottom:8px; padding-bottom:6px; border-bottom:2px solid var(--ink);}
+table.vtable{width:100%; border-collapse:collapse; font-size:12.5px; table-layout:fixed;}
+table.vtable th{text-align:left; font-weight:600; color:var(--ink-soft); padding:8px 4px; border-bottom:1px solid var(--line); white-space:nowrap; width:42%;}
+table.vtable td{text-align:right; font-weight:700; padding:8px 4px; border-bottom:1px solid var(--line);}
+table.vtable tr:last-child th, table.vtable tr:last-child td{border-bottom:none;}
+table.vtable tr.emphasis th, table.vtable tr.emphasis td{color:var(--primary);}
+
+/* ---- modal / toast ---- */
+.overlay{position:fixed; inset:0; background:rgba(10,14,11,0.42); display:flex; align-items:center; justify-content:center; z-index:100; padding:16px;}
+.modal{background:var(--surface); border-radius:var(--radius-m); max-width:420px; width:100%; padding:20px; box-shadow:0 12px 32px rgba(0,0,0,.25);}
+.modal p{font-size:13.5px; line-height:1.55; color:var(--ink-soft); margin:8px 0 18px;}
+.modal .modal-actions{display:flex; justify-content:flex-end; gap:8px;}
+.toast{
+  position:fixed; bottom:calc(20px + env(safe-area-inset-bottom,0px)); left:50%; transform:translateX(-50%);
+  background:var(--ink); color:var(--bg); padding:10px 18px; border-radius:999px; font-size:13px; font-weight:600;
+  z-index:200; box-shadow:0 6px 20px rgba(0,0,0,.25); opacity:0; pointer-events:none; transition:opacity .2s, transform .2s;
+}
+.toast.show{opacity:1; transform:translateX(-50%) translateY(-4px);}
+
+.db-warning{
+  background:var(--danger-soft); color:var(--danger); border:1px solid var(--danger); border-radius:var(--radius-s);
+  padding:10px 14px; font-size:12.5px; margin-bottom:14px;
+}
+.skeleton{color:var(--ink-faint); font-size:13px; padding:24px; text-align:center;}
+</style>
+</head>
+<body>
+<div id="app"><div class="skeleton">Loading…</div></div>
+<div id="toastHost"></div>
+<script>
+/* =====================================================================
+   재검 진행사항 트래킹 웹앱
+   ===================================================================== */
+
+/* ---------------------------- i18n ---------------------------------- */
+const I18N = {
+  ko: {
+    appName: "재검 진행 상황",
+    appSub: "M3 Tele 재검/출하 트래킹",
+    nav_input: "입력",
+    nav_summary: "Summary",
+    nav_report: "보고용",
+    date_label: "입력 날짜",
+    date_hint: "기본값은 어제 날짜입니다. 필요 시 변경하세요.",
+    cat_normal: "정규 생산",
+    cat_decap: "디캡 리웍",
+    cat_pm: "P/M 선별",
+    cat_rework: "선별 리웍",
+    cat_shipment: "출하실적",
+    field_input: "Input (검사 수)",
+    field_ok: "OK",
+    field_ng_auto: "NG (자동계산)",
+    field_case: "케이스",
+    field_pmrange: "PM 구간",
+    field_type: "구분",
+    field_site: "SITE",
+    field_qty_normal: "신규",
+    field_qty_resort: "재검(6~7월)",
+    field_qty_decaprw: "디캡리웍",
+    field_qty_sortrw: "선별리웍",
+    field_total_auto: "합계(자동계산)",
+    save_btn: "저장",
+    save_new_btn: "새로 추가",
+    save_edit_btn: "수정 저장",
+    reset_btn: "새로 입력",
+    delete_btn: "삭제",
+    edit_btn: "수정",
+    select_placeholder: "선택하세요",
+    bucket_sum: "판정 합계",
+    scrap_label: "폐기",
+    scrap_hint: "Input(검사수)과 대상수에는 포함되지 않습니다.",
+    scrap_cumulative: "폐기 누적",
+    pm_total_title: "5종 합계",
+    existing_entries: "오늘 날짜의 입력 내역",
+    no_entries: "아직 입력된 내역이 없습니다.",
+    editing_badge: "수정 중",
+    last_updated: "최종 입력일",
+    no_data_yet: "입력 없음",
+    confirm_title: "입력값을 확인해주세요",
+    confirm_mismatch: "Input 수({input})와 세부 항목 합계({sum})가 일치하지 않습니다. 그래도 저장하시겠습니까?",
+    confirm_ok: "그대로 저장",
+    confirm_cancel: "다시 확인",
+    confirm_delete: "이 항목을 삭제할까요? 되돌릴 수 없습니다.",
+    delete_confirm_btn: "삭제",
+    cancel_btn: "취소",
+    toast_saved: "저장되었습니다.",
+    toast_deleted: "삭제되었습니다.",
+    toast_error: "저장에 실패했습니다. 다시 시도해주세요.",
+    db_unavailable: "서버에 연결할 수 없습니다. 접속 주소가 맞는지, 서버가 켜져 있는지 관리자에게 확인해주세요.",
+    summary_title: "진행 현황 Summary",
+    summary_sub: "각 항목은 마지막으로 입력된 날짜를 기준으로 표시됩니다.",
+    target_label: "목표(대상)수량",
+    target_edit_btn: "목표 수정",
+    target_save_btn: "저장",
+    rework_target_auto_hint: "선별 리웍의 대상수는 P/M 선별에서 해당 PM 구간으로 판정된 누적 수량에서 자동 계산되어 별도로 입력하지 않습니다.",
+    decap_baseline_label: "디캡 리웍 초기 보유량 (기초재고)",
+    decap_target_auto_hint: "디캡 리웍 목표(대상)수량 = 이 초기 보유량 + P/M 선별에서 <23으로 판정된 누적 수량(자동 계산)입니다.",
+    progress_label: "진척률",
+    cumulative_input: "누적 Input",
+    cumulative_ok: "누적 OK",
+    cumulative_ng: "누적 NG",
+    grand_total: "합계",
+    ratio_label: "비율",
+    report_title: "M3 Tele 재검 진행 사항",
+    report_asof: "기준일",
+    report_comment: "비고",
+    report_comment_placeholder: "임원 보고용 코멘트를 입력하세요…",
+    export_image_btn: "이미지로 내보내기",
+    export_excel_btn: "엑셀로 내보내기",
+    exporting: "내보내는 중…",
+    report_pm_section: "P/M 선별",
+    report_decap_section: "디캡 리웍",
+    report_rework_section: "선별 리웍",
+    report_shipment_section: "출하 실적",
+    target_qty: "대상수",
+    inspected_qty: "검사수",
+    site_datalist_hint: "예: SEVT, GUMI",
+    normal_case_label: "정규 생산 / 디캡 리웍",
+  },
+  vi: {
+    appName: "Tiến độ tái kiểm",
+    appSub: "Theo dõi tái kiểm / xuất hàng M3 Tele",
+    nav_input: "Nhập liệu",
+    nav_summary: "Tổng hợp",
+    nav_report: "Báo cáo",
+    date_label: "Ngày nhập",
+    date_hint: "Mặc định là ngày hôm qua. Có thể thay đổi nếu cần.",
+    cat_normal: "Sản xuất chính quy",
+    cat_decap: "Rework Decap",
+    cat_pm: "Phân loại P/M",
+    cat_rework: "Rework phân loại",
+    cat_shipment: "Kết quả xuất hàng",
+    field_input: "Input (số lượng kiểm)",
+    field_ok: "OK",
+    field_ng_auto: "NG (tự động)",
+    field_case: "Trường hợp",
+    field_pmrange: "Khoảng PM",
+    field_type: "Phân loại",
+    field_site: "SITE",
+    field_qty_normal: "Hàng mới",
+    field_qty_resort: "Tái kiểm (T6~7)",
+    field_qty_decaprw: "Rework Decap",
+    field_qty_sortrw: "Rework phân loại",
+    field_total_auto: "Tổng cộng (tự động)",
+    save_btn: "Lưu",
+    save_new_btn: "Thêm mới",
+    save_edit_btn: "Lưu sửa đổi",
+    reset_btn: "Nhập mới",
+    delete_btn: "Xóa",
+    edit_btn: "Sửa",
+    select_placeholder: "Chọn",
+    bucket_sum: "Tổng phân loại",
+    scrap_label: "Hàng hủy",
+    scrap_hint: "Không tính vào Input hay số lượng mục tiêu.",
+    scrap_cumulative: "Hàng hủy lũy kế",
+    pm_total_title: "Tổng cộng (5 loại)",
+    existing_entries: "Dữ liệu đã nhập trong ngày",
+    no_entries: "Chưa có dữ liệu nào được nhập.",
+    editing_badge: "Đang sửa",
+    last_updated: "Ngày cập nhật cuối",
+    no_data_yet: "Chưa có dữ liệu",
+    confirm_title: "Vui lòng kiểm tra lại dữ liệu",
+    confirm_mismatch: "Số Input ({input}) và tổng các mục chi tiết ({sum}) không khớp nhau. Bạn vẫn muốn lưu chứ?",
+    confirm_ok: "Vẫn lưu",
+    confirm_cancel: "Kiểm tra lại",
+    confirm_delete: "Xóa mục này? Không thể hoàn tác.",
+    delete_confirm_btn: "Xóa",
+    cancel_btn: "Hủy",
+    toast_saved: "Đã lưu.",
+    toast_deleted: "Đã xóa.",
+    toast_error: "Lưu thất bại. Vui lòng thử lại.",
+    db_unavailable: "Không thể kết nối máy chủ. Vui lòng kiểm tra lại địa chỉ truy cập hoặc liên hệ quản trị viên.",
+    summary_title: "Tổng hợp tiến độ",
+    summary_sub: "Mỗi mục hiển thị theo ngày nhập dữ liệu gần nhất.",
+    target_label: "Số lượng mục tiêu",
+    target_edit_btn: "Sửa mục tiêu",
+    target_save_btn: "Lưu",
+    rework_target_auto_hint: "Số lượng mục tiêu của Rework phân loại được tự động tính từ số lượng lũy kế đã phân loại vào khoảng PM tương ứng ở bước Phân loại P/M, không cần nhập riêng.",
+    decap_baseline_label: "Tồn kho ban đầu Rework Decap",
+    decap_target_auto_hint: "Số lượng mục tiêu Rework Decap = Tồn kho ban đầu này + số lượng lũy kế được phân loại <23 ở bước Phân loại P/M (tự động tính).",
+    progress_label: "Tỷ lệ tiến độ",
+    cumulative_input: "Input lũy kế",
+    cumulative_ok: "OK lũy kế",
+    cumulative_ng: "NG lũy kế",
+    grand_total: "Tổng cộng",
+    ratio_label: "Tỷ lệ",
+    report_title: "Tiến độ tái kiểm M3 Tele",
+    report_asof: "Tính đến ngày",
+    report_comment: "Ghi chú",
+    report_comment_placeholder: "Nhập ghi chú cho báo cáo cấp trên…",
+    export_image_btn: "Xuất ảnh",
+    export_excel_btn: "Xuất Excel",
+    exporting: "Đang xuất…",
+    report_pm_section: "Phân loại P/M",
+    report_decap_section: "Rework Decap",
+    report_rework_section: "Rework phân loại",
+    report_shipment_section: "Kết quả xuất hàng",
+    target_qty: "Số lượng mục tiêu",
+    inspected_qty: "Số đã kiểm",
+    site_datalist_hint: "VD: SEVT, GUMI",
+    normal_case_label: "Sản xuất chính quy / Rework Decap",
+  }
+};
+
+/* ------------------------- master data ------------------------------- */
+const PM_CASES = [
+  { id: "bracket_o", ko: "Bracket 有", vi: "Có Bracket" },
+  { id: "bracket_x", ko: "Bracket 無 (Re-soldering)", vi: "Không Bracket (Hàn lại)" },
+  { id: "oqc_67", ko: "6~7월 생산 OQC 보유", vi: "OQC lưu kho SX T6~7" },
+  { id: "co2", ko: "CO2 삭제 (Multical 재검 불량)", vi: "Xóa CO2 (NG tái kiểm Multical)" },
+  { id: "customer_return", ko: "고객 반품 (SET & Ass'y 해체품)", vi: "Hàng khách trả (SET & Ass'y tháo rã)" },
+];
+
+const REWORK_CASES = [
+  { id: "bracket_assembly", ko: "브라켓 조립완료", vi: "Hoàn thành lắp Bracket" },
+  { id: "solder_removal", ko: "솔더링 제거", vi: "Tháo hàn (Solder)" },
+  { id: "sevt_return", ko: "SEVT 반품 (SET해체 포함)", vi: "Hàng SEVT trả lại (gồm tháo SET)" },
+  { id: "multical_ng", ko: "멀티캘 재검NG", vi: "NG tái kiểm Multical" },
+  { id: "production_67_ng", ko: "6~7월 생산 NG", vi: "NG sản xuất T6~7" },
+];
+
+const PM_RANGES = [
+  { id: "ge34", ko: "≥ 34", vi: "≥ 34" },
+  { id: "r30_34", ko: "30~34", vi: "30~34" },
+  { id: "r28_30", ko: "28~30", vi: "28~30" },
+  { id: "r25_28", ko: "25~28", vi: "25~28" },
+];
+
+const PM_BUCKETS = [
+  { id: "ge34", ko: "≥ 34", vi: "≥ 34" },
+  { id: "r30_34", ko: "30~34", vi: "30~34" },
+  { id: "r28_30", ko: "28~30", vi: "28~30" },
+  { id: "r25_28", ko: "25~28", vi: "25~28" },
+  { id: "r23_25", ko: "23~25", vi: "23~25" },
+  { id: "lt23", ko: "< 23", vi: "< 23" },
+];
+
+const SHIPMENT_TYPES = [
+  { id: "regular", ko: "정규", vi: "Chính quy" },
+  { id: "rma", ko: "RMA", vi: "RMA" },
+  { id: "claim", ko: "Claim", vi: "Claim" },
+];
+
+const SHIPMENT_SITES = ["SEVT", "GUMI"];
+
+/* ----------------------------- utils --------------------------------- */
+function pad2(n) { return String(n).padStart(2, "0"); }
+function toDateStr(d) { return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate()); }
+function yesterdayStr() {
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  return toDateStr(d);
+}
+function todayStr() { return toDateStr(new Date()); }
+function fmtDateShort(dateStr, lang) {
+  if (!dateStr) return "-";
+  const [y, m, d] = dateStr.split("-");
+  return lang === "vi" ? `${d}/${m}` : `${m}/${d}`;
+}
+function numFmt(n) {
+  if (n === null || n === undefined || isNaN(n)) return "0";
+  return Math.round(n).toLocaleString("en-US");
+}
+function pct(a, b) {
+  if (!b || b <= 0) return null;
+  return (a / b) * 100;
+}
+function sanitizeIdPart(s) {
+  return String(s || "").trim().replace(/[^A-Za-z0-9_\-.~:@+가-힣]/g, "-").slice(0, 60) || "x";
+}
+function t(key) { return (I18N[STATE.lang] && I18N[STATE.lang][key]) || key; }
+function localName(obj) { return STATE.lang === "vi" ? obj.vi : obj.ko; }
+function caseById(list, id) { return list.find(c => c.id === id); }
+
+function showToast(msg) {
+  const host = document.getElementById("toastHost");
+  const el = document.createElement("div");
+  el.className = "toast";
+  el.textContent = msg;
+  host.appendChild(el);
+  requestAnimationFrame(() => el.classList.add("show"));
+  setTimeout(() => {
+    el.classList.remove("show");
+    setTimeout(() => el.remove(), 250);
+  }, 2200);
+}
+
+function showModal({ title, body, confirmText, cancelText, onConfirm, danger }) {
+  const overlay = document.createElement("div");
+  overlay.className = "overlay";
+  overlay.innerHTML = `
+    <div class="modal">
+      <h3>${title}</h3>
+      <p>${body}</p>
+      <div class="modal-actions">
+        <button class="btn" data-act="cancel">${cancelText}</button>
+        <button class="btn ${danger ? "danger" : "primary"}" data-act="confirm">${confirmText}</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay || e.target.dataset.act === "cancel") { overlay.remove(); }
+    else if (e.target.dataset.act === "confirm") { overlay.remove(); onConfirm(); }
+  });
+}
+/* ----------------------------- state ---------------------------------- */
+const STATE = {
+  lang: (localStorage.getItem("jg_lang") || "ko"),
+  view: "input",
+  selectedDate: yesterdayStr(),
+  inputCategory: "normal",
+  editing: null,        // { collection, id } currently loaded into the PM/Rework/Shipment form
+  targetsEditing: false,
+  dbReady: false,        // true once the server has answered at least once
+};
+
+const CACHE = {
+  production_normal: {},   // date -> {input, ok, updatedAt}
+  production_decap: {},    // date -> {input, ok, updatedAt}
+  pmSelection: [],          // [{id, date, caseId, input, scrap, buckets, updatedAt}]
+  sortRework: [],           // [{id, date, caseId, pmRange, input, ok, updatedAt}]
+  shipment: [],              // [{id, date, type, site, normal, resort67, decapRework, sortRework, updatedAt}]
+  targets: {},               // {normal, decap, pm_<caseId>, ...}
+  report: { comment: "" },
+};
+
+let pollTimer = null;
+
+/* ------------------------- server API layer ----------------------------- */
+async function apiFetchAll() {
+  const res = await fetch("api/all", { cache: "no-store" });
+  if (!res.ok) throw new Error("fetch failed: " + res.status);
+  return res.json();
+}
+
+async function refreshFromServer() {
+  try {
+    const data = await apiFetchAll();
+    CACHE.production_normal = data.production_normal || {};
+    CACHE.production_decap = data.production_decap || {};
+    CACHE.pmSelection = data.pmSelection || [];
+    CACHE.sortRework = data.sortRework || [];
+    CACHE.shipment = data.shipment || [];
+    CACHE.targets = data.targets || {};
+    CACHE.report = data.report || { comment: "" };
+    STATE.dbReady = true;
+  } catch (e) {
+    STATE.dbReady = false;
+  }
+  render();
+}
+
+/* Polls the server periodically so other people's entries show up without
+   a manual refresh. 20s is a reasonable balance for a small internal tool;
+   raise the interval if this ever runs on a slow link. */
+async function initDb() {
+  await refreshFromServer();
+  if (pollTimer) clearInterval(pollTimer);
+  pollTimer = setInterval(refreshFromServer, 20000);
+}
+
+async function dbSet(collection, docId, data) {
+  try {
+    const res = await fetch("api/save", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ collection, doc_id: docId, data }),
+    });
+    if (!res.ok) throw new Error("save failed: " + res.status);
+    await refreshFromServer();
+    return true;
+  } catch (e) {
+    showToast(t("db_unavailable"));
+    return false;
+  }
+}
+
+async function dbDelete(collection, docId) {
+  try {
+    const res = await fetch("api/delete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ collection, doc_id: docId }),
+    });
+    if (!res.ok) throw new Error("delete failed: " + res.status);
+    await refreshFromServer();
+    return true;
+  } catch (e) {
+    showToast(t("db_unavailable"));
+    return false;
+  }
+}
+
+async function dbSetDoc(path, data) {
+  const parts = path.split("/");
+  return dbSet(parts[0], parts[1], data);
+}
+
+/* Plain browser download — works on any normal web page, no special
+   platform capability needed. */
+function browserDownload(filename, blob) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+function pmCumulativeLt23(pmByCase) {
+  let sum = 0;
+  PM_CASES.forEach(c => { sum += (pmByCase[c.id] && pmByCase[c.id].buckets.lt23) || 0; });
+  return sum;
+}
+
+/* --------------------------- aggregation -------------------------------- */
+function aggProduction(map) {
+  let sumInput = 0, sumOk = 0, lastDate = null;
+  Object.keys(map).forEach(date => {
+    const rec = map[date];
+    if (!rec) return;
+    sumInput += Number(rec.input) || 0;
+    sumOk += Number(rec.ok) || 0;
+    if (!lastDate || date > lastDate) lastDate = date;
+  });
+  return { sumInput, sumOk, lastDate };
+}
+
+function aggPmSelectionByCase() {
+  const result = {};
+  PM_CASES.forEach(c => { result[c.id] = { input: 0, scrap: 0, buckets: { ge34: 0, r30_34: 0, r28_30: 0, r25_28: 0, r23_25: 0, lt23: 0 }, lastDate: null }; });
+  CACHE.pmSelection.forEach(rec => {
+    const bucket = result[rec.caseId];
+    if (!bucket) return;
+    bucket.input += Number(rec.input) || 0;
+    bucket.scrap += Number(rec.scrap) || 0;
+    PM_BUCKETS.forEach(b => { bucket.buckets[b.id] += Number(rec.buckets && rec.buckets[b.id]) || 0; });
+    if (!bucket.lastDate || rec.date > bucket.lastDate) bucket.lastDate = rec.date;
+  });
+  return result;
+}
+
+function aggSortReworkByCase() {
+  const result = {};
+  REWORK_CASES.forEach(c => {
+    result[c.id] = { input: 0, ok: 0, lastDate: null, byRange: {} };
+    PM_RANGES.forEach(r => { result[c.id].byRange[r.id] = { input: 0, ok: 0 }; });
+  });
+  CACHE.sortRework.forEach(rec => {
+    const bucket = result[rec.caseId];
+    if (!bucket) return;
+    bucket.input += Number(rec.input) || 0;
+    bucket.ok += Number(rec.ok) || 0;
+    if (!bucket.lastDate || rec.date > bucket.lastDate) bucket.lastDate = rec.date;
+    if (bucket.byRange[rec.pmRange]) {
+      bucket.byRange[rec.pmRange].input += Number(rec.input) || 0;
+      bucket.byRange[rec.pmRange].ok += Number(rec.ok) || 0;
+    }
+  });
+  return result;
+}
+
+function aggShipment() {
+  const byType = {};
+  SHIPMENT_TYPES.forEach(ty => { byType[ty.id] = { normal: 0, resort67: 0, decapRework: 0, sortRework: 0, total: 0 }; });
+  let lastDate = null;
+  CACHE.shipment.forEach(rec => {
+    const b = byType[rec.type];
+    if (!b) return;
+    b.normal += Number(rec.normal) || 0;
+    b.resort67 += Number(rec.resort67) || 0;
+    b.decapRework += Number(rec.decapRework) || 0;
+    b.sortRework += Number(rec.sortRework) || 0;
+    if (!lastDate || rec.date > lastDate) lastDate = rec.date;
+  });
+  Object.keys(byType).forEach(k => {
+    const b = byType[k];
+    b.total = b.normal + b.resort67 + b.decapRework + b.sortRework;
+  });
+  const grand = { normal: 0, resort67: 0, decapRework: 0, sortRework: 0, total: 0 };
+  Object.values(byType).forEach(b => {
+    grand.normal += b.normal; grand.resort67 += b.resort67; grand.decapRework += b.decapRework;
+    grand.sortRework += b.sortRework; grand.total += b.total;
+  });
+  return { byType, grand, lastDate };
+}
+
+/* ----------------------------- render root ------------------------------- */
+function render() {
+  const app = document.getElementById("app");
+  app.innerHTML = `
+    ${renderTopbar()}
+    <div id="content">${renderView()}</div>
+  `;
+}
+
+function renderTopbar() {
+  const navs = [
+    ["input", t("nav_input")],
+    ["summary", t("nav_summary")],
+    ["report", t("nav_report")],
+  ];
+  return `
+    <div class="topbar">
+      <div class="topbar-row">
+        <div class="brand">
+          <span class="mark"></span>
+          <div>
+            <h1>${t("appName")}</h1><br/><small>${t("appSub")}</small>
+          </div>
+        </div>
+        <div class="lang-toggle">
+          <button data-lang="ko" class="${STATE.lang === "ko" ? "active" : ""}">한국어</button>
+          <button data-lang="vi" class="${STATE.lang === "vi" ? "active" : ""}">Tiếng Việt</button>
+        </div>
+      </div>
+      <div class="tabs">
+        ${navs.map(([id, label]) => `<button data-nav="${id}" class="${STATE.view === id ? "active" : ""}">${label}</button>`).join("")}
+      </div>
+    </div>
+  `;
+}
+
+function renderView() {
+  if (!STATE.dbReady) {
+    return `<div class="section"><div class="db-warning">${t("db_unavailable")}</div></div>` + renderViewInner();
+  }
+  return renderViewInner();
+}
+
+function renderViewInner() {
+  if (STATE.view === "input") return renderInputView();
+  if (STATE.view === "summary") return renderSummaryView();
+  if (STATE.view === "report") return renderReportView();
+  return "";
+}
+/* ============================ Input view ================================ */
+function renderInputView() {
+  const cats = [
+    ["normal", t("cat_normal")],
+    ["decap", t("cat_decap")],
+    ["pm", t("cat_pm")],
+    ["rework", t("cat_rework")],
+    ["shipment", t("cat_shipment")],
+  ];
+  return `
+    <div class="section">
+      <div class="card">
+        <div class="field" style="max-width:240px;">
+          <label>${t("date_label")}</label>
+          <input type="date" id="dateInput" value="${STATE.selectedDate}">
+          <span class="hint">${t("date_hint")}</span>
+        </div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="category-tabs">
+        ${cats.map(([id, label]) => `<button data-cat="${id}" class="${STATE.inputCategory === id ? "active" : ""}">${label}</button>`).join("")}
+      </div>
+      ${renderInputForm()}
+    </div>
+  `;
+}
+
+function renderInputForm() {
+  switch (STATE.inputCategory) {
+    case "normal": return renderSimpleProdForm("normal");
+    case "decap": return renderSimpleProdForm("decap");
+    case "pm": return renderPmForm();
+    case "rework": return renderReworkForm();
+    case "shipment": return renderShipmentForm();
+    default: return "";
+  }
+}
+
+/* ---- 정규생산 / 디캡리웍 (날짜당 1건) ---- */
+function renderSimpleProdForm(kind) {
+  const collection = kind === "normal" ? "production_normal" : "production_decap";
+  const rec = CACHE[collection][STATE.selectedDate] || {};
+  const label = kind === "normal" ? t("cat_normal") : t("cat_decap");
+  return `
+  <div class="card">
+    <h3 style="font-size:14px;margin-bottom:12px;">${label} — ${STATE.selectedDate}</h3>
+    <div class="field-row">
+      <div class="field"><label>${t("field_input")}</label><input type="number" min="0" id="simpleInput" value="${rec.input ?? ""}"></div>
+      <div class="field"><label>${t("field_ok")}</label><input type="number" min="0" id="simpleOk" value="${rec.ok ?? ""}"></div>
+    </div>
+    <div style="margin-top:14px;display:flex;gap:8px;">
+      <button class="btn primary" data-action="save-simple" data-kind="${kind}">${t("save_btn")}</button>
+    </div>
+  </div>`;
+}
+
+/* ---- P/M 선별 ---- */
+function renderPmForm() {
+  const editingRec = STATE.editing && STATE.editing.collection === "pmSelection"
+    ? CACHE.pmSelection.find(r => r.id === STATE.editing.id) : null;
+  const currentCaseId = editingRec ? editingRec.caseId : (STATE.pmCaseSelectValue || PM_CASES[0].id);
+  const buckets = editingRec ? (editingRec.buckets || {}) : {};
+  const todaysEntries = CACHE.pmSelection.filter(r => r.date === STATE.selectedDate);
+
+  return `
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+      <h3 style="font-size:14px;">${t("cat_pm")} — ${STATE.selectedDate}</h3>
+      ${editingRec ? `<span class="pill warn">${t("editing_badge")}</span>` : ""}
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>${t("field_case")}</label>
+        <select id="pmCaseSelect" ${editingRec ? "disabled" : ""}>
+          ${PM_CASES.map(c => `<option value="${c.id}" ${c.id === currentCaseId ? "selected" : ""}>${localName(c)}</option>`).join("")}
+        </select>
+      </div>
+      <div class="field"><label>${t("field_input")}</label><input type="number" min="0" id="pmInput" value="${editingRec ? editingRec.input : ""}"></div>
+    </div>
+    <div class="field-row" style="margin-top:10px;">
+      ${PM_BUCKETS.map(b => `
+        <div class="field">
+          <label>${localName(b)}</label>
+          <input type="number" min="0" class="pmBucket" data-bucket="${b.id}" value="${buckets[b.id] ?? ""}">
+        </div>`).join("")}
+    </div>
+    <div class="field-row" style="margin-top:10px;max-width:220px;">
+      <div class="field">
+        <label>${t("scrap_label")}</label>
+        <input type="number" min="0" id="pmScrap" value="${editingRec ? (editingRec.scrap ?? "") : ""}">
+        <span class="hint">${t("scrap_hint")}</span>
+      </div>
+    </div>
+    <div style="margin-top:14px;display:flex;gap:8px;">
+      <button class="btn primary" data-action="save-pm">${editingRec ? t("save_edit_btn") : t("save_new_btn")}</button>
+      ${editingRec ? `<button class="btn ghost" data-action="reset-form" data-collection="pmSelection">${t("reset_btn")}</button>` : ""}
+    </div>
+  </div>
+  ${renderPmEntryList(todaysEntries)}
+  `;
+}
+
+function renderPmEntryList(entries) {
+  if (!entries.length) return `<div class="card" style="margin-top:12px;"><div class="empty-row">${t("no_entries")}</div></div>`;
+  return `<div class="card" style="margin-top:12px;overflow-x:auto;">
+    <div class="muted" style="margin-bottom:8px;">${t("existing_entries")}</div>
+    <table class="entry-table">
+      <thead><tr><th>${t("field_case")}</th><th>${t("field_input")}</th><th>${t("bucket_sum")}</th><th>${t("scrap_label")}</th><th></th></tr></thead>
+      <tbody>
+      ${entries.map(rec => {
+        const c = caseById(PM_CASES, rec.caseId);
+        const sum = PM_BUCKETS.reduce((s, b) => s + (Number(rec.buckets && rec.buckets[b.id]) || 0), 0);
+        return `<tr>
+          <td>${c ? localName(c) : rec.caseId}</td>
+          <td>${numFmt(rec.input)}</td>
+          <td>${numFmt(sum)}</td>
+          <td>${numFmt(rec.scrap || 0)}</td>
+          <td><button class="btn small" data-edit-collection="pmSelection" data-edit-id="${rec.id}">${t("edit_btn")}</button>
+              <button class="btn small danger" data-del-collection="pmSelection" data-del-id="${rec.id}">${t("delete_btn")}</button></td>
+        </tr>`;
+      }).join("")}
+      </tbody>
+    </table>
+  </div>`;
+}
+
+/* ---- 선별 리웍 ---- */
+function renderReworkForm() {
+  const editingRec = STATE.editing && STATE.editing.collection === "sortRework"
+    ? CACHE.sortRework.find(r => r.id === STATE.editing.id) : null;
+  const currentCaseId = editingRec ? editingRec.caseId : (STATE.rwCaseSelectValue || REWORK_CASES[0].id);
+  const currentRange = editingRec ? editingRec.pmRange : (STATE.rwRangeSelectValue || PM_RANGES[0].id);
+  const todaysEntries = CACHE.sortRework.filter(r => r.date === STATE.selectedDate);
+
+  return `
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+      <h3 style="font-size:14px;">${t("cat_rework")} — ${STATE.selectedDate}</h3>
+      ${editingRec ? `<span class="pill warn">${t("editing_badge")}</span>` : ""}
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>${t("field_case")}</label>
+        <select id="rwCaseSelect" ${editingRec ? "disabled" : ""}>
+          ${REWORK_CASES.map(c => `<option value="${c.id}" ${c.id === currentCaseId ? "selected" : ""}>${localName(c)}</option>`).join("")}
+        </select>
+      </div>
+      <div class="field">
+        <label>${t("field_pmrange")}</label>
+        <select id="rwRangeSelect" ${editingRec ? "disabled" : ""}>
+          ${PM_RANGES.map(r => `<option value="${r.id}" ${r.id === currentRange ? "selected" : ""}>${localName(r)}</option>`).join("")}
+        </select>
+      </div>
+      <div class="field"><label>${t("field_input")}</label><input type="number" min="0" id="rwInput" value="${editingRec ? editingRec.input : ""}"></div>
+      <div class="field"><label>${t("field_ok")}</label><input type="number" min="0" id="rwOk" value="${editingRec ? editingRec.ok : ""}"></div>
+    </div>
+    <div style="margin-top:14px;display:flex;gap:8px;">
+      <button class="btn primary" data-action="save-rework">${editingRec ? t("save_edit_btn") : t("save_new_btn")}</button>
+      ${editingRec ? `<button class="btn ghost" data-action="reset-form" data-collection="sortRework">${t("reset_btn")}</button>` : ""}
+    </div>
+  </div>
+  ${renderReworkEntryList(todaysEntries)}
+  `;
+}
+
+function renderReworkEntryList(entries) {
+  if (!entries.length) return `<div class="card" style="margin-top:12px;"><div class="empty-row">${t("no_entries")}</div></div>`;
+  return `<div class="card" style="margin-top:12px;">
+    <div class="muted" style="margin-bottom:8px;">${t("existing_entries")}</div>
+    <table class="entry-table">
+      <thead><tr><th>${t("field_case")}</th><th>${t("field_pmrange")}</th><th>${t("field_input")}</th><th>${t("field_ok")}</th><th></th></tr></thead>
+      <tbody>
+      ${entries.map(rec => {
+        const c = caseById(REWORK_CASES, rec.caseId);
+        const r = caseById(PM_RANGES, rec.pmRange);
+        return `<tr>
+          <td>${c ? localName(c) : rec.caseId}</td>
+          <td>${r ? localName(r) : rec.pmRange}</td>
+          <td>${numFmt(rec.input)}</td>
+          <td>${numFmt(rec.ok)}</td>
+          <td><button class="btn small" data-edit-collection="sortRework" data-edit-id="${rec.id}">${t("edit_btn")}</button>
+              <button class="btn small danger" data-del-collection="sortRework" data-del-id="${rec.id}">${t("delete_btn")}</button></td>
+        </tr>`;
+      }).join("")}
+      </tbody>
+    </table>
+  </div>`;
+}
+
+/* ---- 출하실적 ---- */
+function renderShipmentForm() {
+  const editingRec = STATE.editing && STATE.editing.collection === "shipment"
+    ? CACHE.shipment.find(r => r.id === STATE.editing.id) : null;
+  const currentType = editingRec ? editingRec.type : (STATE.shipTypeSelectValue || SHIPMENT_TYPES[0].id);
+  const currentSite = editingRec ? editingRec.site : (STATE.shipSiteValue || "");
+  const todaysEntries = CACHE.shipment.filter(r => r.date === STATE.selectedDate);
+
+  return `
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+      <h3 style="font-size:14px;">${t("cat_shipment")} — ${STATE.selectedDate}</h3>
+      ${editingRec ? `<span class="pill warn">${t("editing_badge")}</span>` : ""}
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>${t("field_type")}</label>
+        <select id="shipTypeSelect" ${editingRec ? "disabled" : ""}>
+          ${SHIPMENT_TYPES.map(ty => `<option value="${ty.id}" ${ty.id === currentType ? "selected" : ""}>${localName(ty)}</option>`).join("")}
+        </select>
+      </div>
+      <div class="field">
+        <label>SITE</label>
+        <input type="text" id="shipSiteInput" list="siteList" value="${currentSite}" ${editingRec ? "disabled" : ""} placeholder="${t("site_datalist_hint")}">
+        <datalist id="siteList">${SHIPMENT_SITES.map(s => `<option value="${s}">`).join("")}</datalist>
+      </div>
+    </div>
+    <div class="field-row" style="margin-top:10px;">
+      <div class="field"><label>${t("field_qty_normal")}</label><input type="number" min="0" id="shipNormal" value="${editingRec ? editingRec.normal : ""}"></div>
+      <div class="field"><label>${t("field_qty_resort")}</label><input type="number" min="0" id="shipResort" value="${editingRec ? editingRec.resort67 : ""}"></div>
+      <div class="field"><label>${t("field_qty_decaprw")}</label><input type="number" min="0" id="shipDecapRw" value="${editingRec ? editingRec.decapRework : ""}"></div>
+      <div class="field"><label>${t("field_qty_sortrw")}</label><input type="number" min="0" id="shipSortRw" value="${editingRec ? editingRec.sortRework : ""}"></div>
+    </div>
+    <div style="margin-top:14px;display:flex;gap:8px;">
+      <button class="btn primary" data-action="save-shipment">${editingRec ? t("save_edit_btn") : t("save_new_btn")}</button>
+      ${editingRec ? `<button class="btn ghost" data-action="reset-form" data-collection="shipment">${t("reset_btn")}</button>` : ""}
+    </div>
+  </div>
+  ${renderShipmentEntryList(todaysEntries)}
+  `;
+}
+
+function renderShipmentEntryList(entries) {
+  if (!entries.length) return `<div class="card" style="margin-top:12px;"><div class="empty-row">${t("no_entries")}</div></div>`;
+  return `<div class="card" style="margin-top:12px;overflow-x:auto;">
+    <div class="muted" style="margin-bottom:8px;">${t("existing_entries")}</div>
+    <table class="entry-table">
+      <thead><tr><th>${t("field_type")}</th><th>SITE</th><th>${t("field_qty_normal")}</th><th>${t("field_qty_resort")}</th><th>${t("field_qty_decaprw")}</th><th>${t("field_qty_sortrw")}</th><th>${t("field_total_auto")}</th><th></th></tr></thead>
+      <tbody>
+      ${entries.map(rec => {
+        const ty = caseById(SHIPMENT_TYPES, rec.type);
+        const total = (Number(rec.normal) || 0) + (Number(rec.resort67) || 0) + (Number(rec.decapRework) || 0) + (Number(rec.sortRework) || 0);
+        return `<tr>
+          <td>${ty ? localName(ty) : rec.type}</td>
+          <td>${rec.site || ""}</td>
+          <td>${numFmt(rec.normal)}</td>
+          <td>${numFmt(rec.resort67)}</td>
+          <td>${numFmt(rec.decapRework)}</td>
+          <td>${numFmt(rec.sortRework)}</td>
+          <td>${numFmt(total)}</td>
+          <td><button class="btn small" data-edit-collection="shipment" data-edit-id="${rec.id}">${t("edit_btn")}</button>
+              <button class="btn small danger" data-del-collection="shipment" data-del-id="${rec.id}">${t("delete_btn")}</button></td>
+        </tr>`;
+      }).join("")}
+      </tbody>
+    </table>
+  </div>`;
+}
+/* ============================ Summary view =============================== */
+function shipmentTableHtml(ship, cls, includeRatio) {
+  const g = ship.grand;
+  const rp = (v) => g.total ? pct(v, g.total).toFixed(1) + "%" : "-";
+  return `<table class="${cls}" style="table-layout:fixed;">
+    <colgroup><col style="width:18%"><col><col><col><col><col></colgroup>
+    <thead><tr><th>${t("field_type")}</th><th>${t("field_qty_normal")}</th><th>${t("field_qty_resort")}</th><th>${t("field_qty_decaprw")}</th><th>${t("field_qty_sortrw")}</th><th>${t("grand_total")}</th></tr></thead>
+    <tbody>
+    ${SHIPMENT_TYPES.map(ty => {
+      const b = ship.byType[ty.id];
+      return `<tr><td>${localName(ty)}</td><td>${numFmt(b.normal)}</td><td>${numFmt(b.resort67)}</td><td>${numFmt(b.decapRework)}</td><td>${numFmt(b.sortRework)}</td><td>${numFmt(b.total)}</td></tr>`;
+    }).join("")}
+    <tr class="total-row"><td>${t("grand_total")}</td><td>${numFmt(g.normal)}</td><td>${numFmt(g.resort67)}</td><td>${numFmt(g.decapRework)}</td><td>${numFmt(g.sortRework)}</td><td>${numFmt(g.total)}</td></tr>
+    ${includeRatio ? `<tr><td>${t("ratio_label")}</td><td>${rp(g.normal)}</td><td>${rp(g.resort67)}</td><td>${rp(g.decapRework)}</td><td>${rp(g.sortRework)}</td><td>100%</td></tr>` : ""}
+    </tbody>
+  </table>`;
+}
+function renderShipmentSummaryTable(ship) {
+  return `<div class="card" style="overflow-x:auto;">${shipmentTableHtml(ship, "entry-table", true)}</div>`;
+}
+
+function renderSummaryView() {
+  const prodNormal = aggProduction(CACHE.production_normal);
+  const prodDecap = aggProduction(CACHE.production_decap);
+  const pmByCase = aggPmSelectionByCase();
+  const rwByCase = aggSortReworkByCase();
+  const ship = aggShipment();
+  const targets = CACHE.targets || {};
+  const decapTarget = (Number(targets.decap) || 0) + pmCumulativeLt23(pmByCase);
+
+  let pmLastDate = null;
+  PM_CASES.forEach(c => { const d = pmByCase[c.id].lastDate; if (d && (!pmLastDate || d > pmLastDate)) pmLastDate = d; });
+  let rwLastDate = null;
+  REWORK_CASES.forEach(c => { const d = rwByCase[c.id].lastDate; if (d && (!rwLastDate || d > rwLastDate)) rwLastDate = d; });
+
+  return `
+  <div class="section">
+    <div class="section-head">
+      <h2>${t("summary_title")}</h2>
+      <button class="btn small" data-action="toggle-targets">${t("target_edit_btn")}</button>
+    </div>
+    <div class="muted" style="margin-bottom:12px;">${t("summary_sub")}</div>
+
+    ${STATE.targetsEditing ? renderTargetsEditor(targets) : ""}
+
+    <div class="grid cols-2">
+      ${renderSimpleStatCard(t("cat_normal"), prodNormal, targets.normal)}
+      ${renderSimpleStatCard(t("cat_decap"), prodDecap, decapTarget || null)}
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-head"><h2>${t("cat_pm")}</h2><span class="muted">${t("last_updated")}: ${pmLastDate ? fmtDateShort(pmLastDate, STATE.lang) : t("no_data_yet")}</span></div>
+    <div class="grid cols-3">
+      ${PM_CASES.map(c => renderPmCase(c, pmByCase[c.id], targets["pm_" + c.id])).join("")}
+      ${renderPmTotalCard(pmByCase, targets)}
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-head"><h2>${t("cat_rework")}</h2><span class="muted">${t("last_updated")}: ${rwLastDate ? fmtDateShort(rwLastDate, STATE.lang) : t("no_data_yet")}</span></div>
+    ${renderReworkSummaryTables(pmByCase, rwByCase)}
+  </div>
+
+  <div class="section">
+    <div class="section-head"><h2>${t("cat_shipment")}</h2><span class="muted">${t("last_updated")}: ${ship.lastDate ? fmtDateShort(ship.lastDate, STATE.lang) : t("no_data_yet")}</span></div>
+    ${renderShipmentSummaryTable(ship)}
+  </div>
+  `;
+}
+
+function renderTargetsEditor(targets) {
+  return `<div class="card" style="margin-bottom:14px;">
+    <div class="muted" style="margin-bottom:10px;">${t("target_label")}</div>
+    <div class="grid cols-3">
+      <div class="field"><label>${t("cat_normal")}</label><input type="number" min="0" class="targetInput" data-target="normal" value="${targets.normal ?? ""}"></div>
+      <div class="field"><label>${t("decap_baseline_label")}</label><input type="number" min="0" class="targetInput" data-target="decap" value="${targets.decap ?? ""}"></div>
+    </div>
+    <div class="hint" style="margin-top:6px;">${t("decap_target_auto_hint")}</div>
+    <div class="muted" style="margin:14px 0 8px;">${t("cat_pm")}</div>
+    <div class="grid cols-3">
+      ${PM_CASES.map(c => `<div class="field"><label>${localName(c)}</label><input type="number" min="0" class="targetInput" data-target="pm_${c.id}" value="${targets["pm_" + c.id] ?? ""}"></div>`).join("")}
+    </div>
+    <div class="hint" style="margin-top:10px;">${t("rework_target_auto_hint")}</div>
+    <div style="margin-top:14px;">
+      <button class="btn primary" data-action="save-targets">${t("target_save_btn")}</button>
+      <button class="btn ghost" data-action="toggle-targets">${t("cancel_btn")}</button>
+    </div>
+  </div>`;
+}
+
+/* 선별 리웍 대상수는 해당 PM 구간에서 P/M 선별로 판정된 누적 수량에서 자동 계산됩니다
+   (원본 엑셀의 Summary!C30=G8 방식과 동일). */
+function reworkRangeTargets(pmByCase) {
+  const out = {};
+  PM_RANGES.forEach(r => {
+    let sum = 0;
+    PM_CASES.forEach(c => { sum += pmByCase[c.id].buckets[r.id] || 0; });
+    out[r.id] = sum;
+  });
+  return out;
+}
+
+function renderReworkSummaryTables(pmByCase, rwByCase) {
+  const rangeTargets = reworkRangeTargets(pmByCase);
+  const rangeInput = {}, rangeOk = {};
+  PM_RANGES.forEach(r => {
+    let inp = 0, ok = 0;
+    REWORK_CASES.forEach(c => { inp += rwByCase[c.id].byRange[r.id].input; ok += rwByCase[c.id].byRange[r.id].ok; });
+    rangeInput[r.id] = inp; rangeOk[r.id] = ok;
+  });
+  const totalTarget = Object.values(rangeTargets).reduce((a, b) => a + b, 0);
+  const totalInput = Object.values(rangeInput).reduce((a, b) => a + b, 0);
+  const totalOk = Object.values(rangeOk).reduce((a, b) => a + b, 0);
+  const colgroup = `<colgroup><col style="width:24%"><col><col><col><col><col></colgroup>`;
+
+  return `
+  <div class="card" style="overflow-x:auto;margin-bottom:12px;">
+    <table class="entry-table" style="table-layout:fixed;">
+      ${colgroup}
+      <thead><tr><th></th>${PM_RANGES.map(r => `<th>${localName(r)}</th>`).join("")}<th>${t("grand_total")}</th></tr></thead>
+      <tbody>
+        <tr><td>${t("target_qty")}</td>${PM_RANGES.map(r => `<td>${numFmt(rangeTargets[r.id])}</td>`).join("")}<td>${numFmt(totalTarget)}</td></tr>
+        <tr><td>${t("field_input")}</td>${PM_RANGES.map(r => `<td>${numFmt(rangeInput[r.id])}</td>`).join("")}<td>${numFmt(totalInput)}</td></tr>
+        <tr class="total-row"><td>${t("progress_label")}</td>${PM_RANGES.map(r => {
+          const p = rangeTargets[r.id] ? pct(rangeInput[r.id], rangeTargets[r.id]) : null;
+          return `<td>${p !== null ? p.toFixed(1) + "%" : "-"}</td>`;
+        }).join("")}<td>${totalTarget ? pct(totalInput, totalTarget).toFixed(1) + "%" : "-"}</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="card" style="overflow-x:auto;">
+    <table class="entry-table" style="table-layout:fixed;">
+      ${colgroup}
+      <thead><tr><th>${t("field_case")}</th>${PM_RANGES.map(r => `<th>${localName(r)}</th>`).join("")}<th>${t("grand_total")}</th></tr></thead>
+      <tbody>
+      ${REWORK_CASES.map(c => {
+        const a = rwByCase[c.id];
+        return `<tr><td>${localName(c)}</td>${PM_RANGES.map(r => `<td>${numFmt(a.byRange[r.id].ok)}/${numFmt(a.byRange[r.id].input)}</td>`).join("")}<td>${numFmt(a.ok)}/${numFmt(a.input)}</td></tr>`;
+      }).join("")}
+      <tr class="total-row"><td>${t("grand_total")}</td>${PM_RANGES.map(r => `<td>${numFmt(rangeOk[r.id])}/${numFmt(rangeInput[r.id])}</td>`).join("")}<td>${numFmt(totalOk)}/${numFmt(totalInput)}</td></tr>
+      </tbody>
+    </table>
+    <div class="hint" style="margin-top:8px;">OK / Input</div>
+  </div>
+  `;
+}
+
+function renderSimpleStatCard(label, agg, target) {
+  const p = target ? pct(agg.sumInput, target) : null;
+  return `
+  <div class="stat-card">
+    <div class="label">${label}</div>
+    <div class="value">${numFmt(agg.sumInput)} <span style="font-size:12px;font-weight:500;color:var(--ink-faint);">Input</span></div>
+    <div class="sub">OK ${numFmt(agg.sumOk)} · ${t("last_updated")} ${agg.lastDate ? fmtDateShort(agg.lastDate, STATE.lang) : t("no_data_yet")}</div>
+    ${target ? `
+    <div class="progress-bar"><div style="width:${Math.min(100, p || 0)}%"></div></div>
+    <div class="sub">${t("progress_label")} ${p.toFixed(1)}% (${t("target_label")} ${numFmt(target)})</div>
+    ` : ""}
+  </div>`;
+}
+
+function renderPmCase(caseDef, agg, target) {
+  const okAbove25 = agg.buckets.ge34 + agg.buckets.r30_34 + agg.buckets.r28_30 + agg.buckets.r25_28;
+  const p = target ? pct(agg.input + agg.scrap, target) : null;
+  return `
+  <div class="case-card">
+    <div class="case-title">${localName(caseDef)}</div>
+    <div class="case-updated">${t("last_updated")}: ${agg.lastDate ? fmtDateShort(agg.lastDate, STATE.lang) : t("no_data_yet")}</div>
+    <div class="mini-grid">
+      <div class="k">Input</div><div class="v">${numFmt(agg.input)}</div>
+      <div class="k">PM≥25</div><div class="v">${numFmt(okAbove25)}</div>
+      <div class="k">23~25</div><div class="v">${numFmt(agg.buckets.r23_25)}</div>
+      <div class="k">&lt;23</div><div class="v">${numFmt(agg.buckets.lt23)}</div>
+    </div>
+    ${target ? `<div class="progress-bar"><div style="width:${Math.min(100, p || 0)}%"></div></div><div class="sub" style="margin-top:4px;">${p.toFixed(1)}% / ${t("target_label")} ${numFmt(target)}</div>` : ""}
+    ${agg.scrap ? `<div class="sub" style="margin-top:6px;">${t("scrap_cumulative")}: ${numFmt(agg.scrap)}</div>` : ""}
+  </div>`;
+}
+
+function renderPmTotalCard(pmByCase, targets) {
+  let input = 0, scrap = 0, target = 0;
+  const buckets = { ge34: 0, r30_34: 0, r28_30: 0, r25_28: 0, r23_25: 0, lt23: 0 };
+  let lastDate = null;
+  PM_CASES.forEach(c => {
+    const a = pmByCase[c.id];
+    input += a.input; scrap += a.scrap; target += Number(targets["pm_" + c.id]) || 0;
+    PM_BUCKETS.forEach(b => { buckets[b.id] += a.buckets[b.id]; });
+    if (a.lastDate && (!lastDate || a.lastDate > lastDate)) lastDate = a.lastDate;
+  });
+  const okAbove25 = buckets.ge34 + buckets.r30_34 + buckets.r28_30 + buckets.r25_28;
+  const p = target ? pct(input + scrap, target) : null;
+  return `
+  <div class="case-card" style="border-color:var(--primary);background:var(--primary-soft);">
+    <div class="case-title">${t("pm_total_title")}</div>
+    <div class="case-updated">${t("last_updated")}: ${lastDate ? fmtDateShort(lastDate, STATE.lang) : t("no_data_yet")}</div>
+    <div class="mini-grid">
+      <div class="k">Input</div><div class="v">${numFmt(input)}</div>
+      <div class="k">PM≥25</div><div class="v">${numFmt(okAbove25)}</div>
+      <div class="k">23~25</div><div class="v">${numFmt(buckets.r23_25)}</div>
+      <div class="k">&lt;23</div><div class="v">${numFmt(buckets.lt23)}</div>
+    </div>
+    ${target ? `<div class="progress-bar"><div style="width:${Math.min(100, p || 0)}%"></div></div><div class="sub" style="margin-top:4px;">${p.toFixed(1)}% / ${t("target_label")} ${numFmt(target)}</div>` : ""}
+    ${scrap ? `<div class="sub" style="margin-top:6px;">${t("scrap_cumulative")}: ${numFmt(scrap)}</div>` : ""}
+  </div>`;
+}
+
+function renderReworkCase(caseDef, agg, target) {
+  const p = target ? pct(agg.input, target) : null;
+  const ng = Math.max(0, agg.input - agg.ok);
+  return `
+  <div class="case-card">
+    <div class="case-title">${localName(caseDef)}</div>
+    <div class="case-updated">${t("last_updated")}: ${agg.lastDate ? fmtDateShort(agg.lastDate, STATE.lang) : t("no_data_yet")}</div>
+    <div class="mini-grid">
+      <div class="k">Input</div><div class="v">${numFmt(agg.input)}</div>
+      <div class="k">OK</div><div class="v">${numFmt(agg.ok)}</div>
+      <div class="k">NG</div><div class="v">${numFmt(ng)}</div>
+    </div>
+    ${target ? `<div class="progress-bar"><div style="width:${Math.min(100, p || 0)}%"></div></div><div class="sub" style="margin-top:4px;">${p.toFixed(1)}% / ${t("target_label")} ${numFmt(target)}</div>` : ""}
+  </div>`;
+}
+/* ============================ Report view ================================ */
+function renderReportView() {
+  const prodNormal = aggProduction(CACHE.production_normal);
+  const prodDecap = aggProduction(CACHE.production_decap);
+  const pmByCase = aggPmSelectionByCase();
+  const rwByCase = aggSortReworkByCase();
+  const ship = aggShipment();
+  const targets = CACHE.targets || {};
+
+  let pmTotalInput = 0, pmTotalGe25 = 0, pmTotal23_25 = 0, pmTotalLt23 = 0, pmTargetTotal = 0, pmTotalScrap = 0, pmLastDate = null;
+  PM_CASES.forEach(c => {
+    const a = pmByCase[c.id];
+    pmTotalInput += a.input;
+    pmTotalScrap += a.scrap || 0;
+    pmTotalGe25 += a.buckets.ge34 + a.buckets.r30_34 + a.buckets.r28_30 + a.buckets.r25_28;
+    pmTotal23_25 += a.buckets.r23_25;
+    pmTotalLt23 += a.buckets.lt23;
+    pmTargetTotal += Number(targets["pm_" + c.id]) || 0;
+    if (a.lastDate && (!pmLastDate || a.lastDate > pmLastDate)) pmLastDate = a.lastDate;
+  });
+  // 폐기는 rework 자체가 불가능하므로 보고용 대상수/진척률 계산에서 제외합니다.
+  const pmTargetReport = Math.max(0, pmTargetTotal - pmTotalScrap);
+  const pmProgress = pmTargetReport > 0 ? pct(pmTotalInput, pmTargetReport) : null;
+
+  let rwLastDate = null;
+  REWORK_CASES.forEach(c => {
+    const a = rwByCase[c.id];
+    if (a.lastDate && (!rwLastDate || a.lastDate > rwLastDate)) rwLastDate = a.lastDate;
+  });
+  const rangeTargets = reworkRangeTargets(pmByCase);
+  const rwTargetTotal = Object.values(rangeTargets).reduce((a, b) => a + b, 0);
+  let rwTotalInput = 0, rwTotalOk = 0;
+  REWORK_CASES.forEach(c => { rwTotalInput += rwByCase[c.id].input; rwTotalOk += rwByCase[c.id].ok; });
+  const rwProgress = rwTargetTotal > 0 ? pct(rwTotalInput, rwTargetTotal) : null;
+  const rwOkPct = rwTotalInput > 0 ? pct(rwTotalOk, rwTotalInput) : null;
+  const rwNgPct = rwTotalInput > 0 ? pct(Math.max(0, rwTotalInput - rwTotalOk), rwTotalInput) : null;
+
+  const decapTarget = (Number(targets.decap) || 0) + pmTotalLt23;
+  const decapProgress = decapTarget ? pct(prodDecap.sumInput, decapTarget) : null;
+  const decapOkPct = prodDecap.sumInput > 0 ? pct(prodDecap.sumOk, prodDecap.sumInput) : null;
+  const decapNgPct = prodDecap.sumInput > 0 ? pct(Math.max(0, prodDecap.sumInput - prodDecap.sumOk), prodDecap.sumInput) : null;
+  const pmGe25Pct = pmTotalInput > 0 ? pct(pmTotalGe25, pmTotalInput) : null;
+  const pm2325Pct = pmTotalInput > 0 ? pct(pmTotal23_25, pmTotalInput) : null;
+  const pmLt23Pct = pmTotalInput > 0 ? pct(pmTotalLt23, pmTotalInput) : null;
+
+  const dates = [prodNormal.lastDate, prodDecap.lastDate, pmLastDate, rwLastDate, ship.lastDate].filter(Boolean);
+  const asOf = dates.length ? dates.slice().sort().slice(-1)[0] : null;
+
+  return `
+  <div class="section">
+    <div class="section-head">
+      <h2>${t("nav_report")}</h2>
+      <div style="display:flex;gap:8px;">
+        <button class="btn" data-action="export-image">${t("export_image_btn")}</button>
+        <button class="btn" data-action="export-excel">${t("export_excel_btn")}</button>
+      </div>
+    </div>
+    <div id="reportCapture">
+      <div class="report-title">${t("report_title")}</div>
+      <div class="report-date">${t("report_asof")}: ${asOf ? asOf : "-"}</div>
+
+      <div class="report-block">
+        <div class="report-cols">
+          <div>
+            <div class="report-col-title">${t("report_pm_section")}</div>
+            <table class="vtable">
+              <tr><th>${t("target_qty")}</th><td>${pmTargetReport ? numFmt(pmTargetReport) : "-"}</td></tr>
+              <tr><th>${t("inspected_qty")}</th><td>${numFmt(pmTotalInput)}</td></tr>
+              <tr class="emphasis"><th>${t("progress_label")}</th><td>${pmProgress !== null ? pmProgress.toFixed(1) + "%" : "-"}</td></tr>
+              <tr><th>PM≥25</th><td>${numFmt(pmTotalGe25)}${pmGe25Pct !== null ? ` (${pmGe25Pct.toFixed(1)}%)` : ""}</td></tr>
+              <tr><th>23~25</th><td>${numFmt(pmTotal23_25)}${pm2325Pct !== null ? ` (${pm2325Pct.toFixed(1)}%)` : ""}</td></tr>
+              <tr><th>&lt;23</th><td>${numFmt(pmTotalLt23)}${pmLt23Pct !== null ? ` (${pmLt23Pct.toFixed(1)}%)` : ""}</td></tr>
+            </table>
+          </div>
+          <div>
+            <div class="report-col-title">${t("report_decap_section")}</div>
+            <table class="vtable">
+              <tr><th>${t("target_qty")}</th><td>${decapTarget ? numFmt(decapTarget) : "-"}</td></tr>
+              <tr><th>Input</th><td>${numFmt(prodDecap.sumInput)}</td></tr>
+              <tr class="emphasis"><th>${t("progress_label")}</th><td>${decapProgress !== null ? decapProgress.toFixed(1) + "%" : "-"}</td></tr>
+              <tr><th>OK</th><td>${numFmt(prodDecap.sumOk)}${decapOkPct !== null ? ` (${decapOkPct.toFixed(1)}%)` : ""}</td></tr>
+              <tr><th>NG</th><td>${numFmt(Math.max(0, prodDecap.sumInput - prodDecap.sumOk))}${decapNgPct !== null ? ` (${decapNgPct.toFixed(1)}%)` : ""}</td></tr>
+              <tr><th></th><td></td></tr>
+            </table>
+          </div>
+          <div>
+            <div class="report-col-title">${t("report_rework_section")}</div>
+            <table class="vtable">
+              <tr><th>${t("target_qty")}</th><td>${rwTargetTotal ? numFmt(rwTargetTotal) : "-"}</td></tr>
+              <tr><th>Input</th><td>${numFmt(rwTotalInput)}</td></tr>
+              <tr class="emphasis"><th>${t("progress_label")}</th><td>${rwProgress !== null ? rwProgress.toFixed(1) + "%" : "-"}</td></tr>
+              <tr><th>OK</th><td>${numFmt(rwTotalOk)}${rwOkPct !== null ? ` (${rwOkPct.toFixed(1)}%)` : ""}</td></tr>
+              <tr><th>NG</th><td>${numFmt(Math.max(0, rwTotalInput - rwTotalOk))}${rwNgPct !== null ? ` (${rwNgPct.toFixed(1)}%)` : ""}</td></tr>
+              <tr><th></th><td></td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="report-block">
+        <h3>${t("report_shipment_section")}</h3>
+        <div style="overflow-x:auto;">
+        ${shipmentTableHtml(ship, "report-table", true)}
+        </div>
+      </div>
+
+      <div class="report-block">
+        <h3>${t("report_comment")}</h3>
+        <textarea id="reportComment" rows="3" placeholder="${t("report_comment_placeholder")}" style="width:100%;border:1px solid var(--line-strong);border-radius:var(--radius-s);padding:9px 10px;font-size:13.5px;font-family:inherit;">${CACHE.report.comment || ""}</textarea>
+      </div>
+    </div>
+  </div>
+  `;
+}
+/* ============================ events & actions ============================ */
+/* dbSetDoc is provided by part2.js (server API layer) */
+
+function wireEvents() {
+  document.addEventListener("click", handleClick);
+  document.addEventListener("change", handleChange);
+}
+
+function handleClick(e) {
+  const langBtn = e.target.closest("[data-lang]");
+  if (langBtn) { STATE.lang = langBtn.dataset.lang; localStorage.setItem("jg_lang", STATE.lang); render(); return; }
+
+  const navBtn = e.target.closest("[data-nav]");
+  if (navBtn) { STATE.view = navBtn.dataset.nav; STATE.editing = null; render(); return; }
+
+  const catBtn = e.target.closest("[data-cat]");
+  if (catBtn) { STATE.inputCategory = catBtn.dataset.cat; STATE.editing = null; render(); return; }
+
+  const editBtn = e.target.closest("[data-edit-collection]");
+  if (editBtn) {
+    STATE.editing = { collection: editBtn.dataset.editCollection, id: editBtn.dataset.editId };
+    render();
+    return;
+  }
+
+  const delBtn = e.target.closest("[data-del-collection]");
+  if (delBtn) {
+    const collection = delBtn.dataset.delCollection;
+    const id = delBtn.dataset.delId;
+    showModal({
+      title: t("confirm_title"),
+      body: t("confirm_delete"),
+      confirmText: t("delete_confirm_btn"),
+      cancelText: t("cancel_btn"),
+      danger: true,
+      onConfirm: async () => {
+        const ok = await dbDelete(collection, id);
+        if (ok) {
+          showToast(t("toast_deleted"));
+          if (STATE.editing && STATE.editing.id === id) STATE.editing = null;
+        }
+      },
+    });
+    return;
+  }
+
+  const actionBtn = e.target.closest("[data-action]");
+  if (actionBtn) { handleAction(actionBtn.dataset.action, actionBtn); return; }
+}
+
+function handleChange(e) {
+  if (e.target.id === "dateInput") {
+    STATE.selectedDate = e.target.value;
+    STATE.editing = null;
+    render();
+    return;
+  }
+  if (e.target.id === "reportComment") {
+    dbSetDoc("meta/report", { comment: e.target.value, updatedAt: new Date().toISOString() }).then(ok => {
+      if (ok) showToast(t("toast_saved"));
+    });
+    return;
+  }
+}
+
+async function handleAction(action, btn) {
+  if (action === "save-simple") {
+    const kind = btn.dataset.kind;
+    const collection = kind === "normal" ? "production_normal" : "production_decap";
+    const input = Number(document.getElementById("simpleInput").value) || 0;
+    const ok = Number(document.getElementById("simpleOk").value) || 0;
+    const data = { date: STATE.selectedDate, input, ok, updatedAt: new Date().toISOString() };
+    const doSave = async () => {
+      const saved = await dbSet(collection, STATE.selectedDate, data);
+      if (saved) showToast(t("toast_saved"));
+    };
+    if (ok > input) {
+      showModal({
+        title: t("confirm_title"),
+        body: t("confirm_mismatch").replace("{input}", input).replace("{sum}", ok),
+        confirmText: t("confirm_ok"), cancelText: t("confirm_cancel"), onConfirm: doSave,
+      });
+    } else { await doSave(); }
+    return;
+  }
+
+  if (action === "save-pm") {
+    const caseId = document.getElementById("pmCaseSelect").value;
+    STATE.pmCaseSelectValue = caseId;
+    const input = Number(document.getElementById("pmInput").value) || 0;
+    const scrap = Number(document.getElementById("pmScrap").value) || 0;
+    const buckets = {};
+    document.querySelectorAll(".pmBucket").forEach(el => { buckets[el.dataset.bucket] = Number(el.value) || 0; });
+    const bucketSum = Object.values(buckets).reduce((a, b) => a + b, 0);
+    const docId = (STATE.editing && STATE.editing.collection === "pmSelection")
+      ? STATE.editing.id : `${STATE.selectedDate}__${caseId}`;
+    const data = { date: STATE.selectedDate, caseId, input, scrap, buckets, updatedAt: new Date().toISOString() };
+    const doSave = async () => {
+      const saved = await dbSet("pmSelection", docId, data);
+      if (saved) { showToast(t("toast_saved")); STATE.editing = null; }
+    };
+    if (bucketSum !== input) {
+      showModal({
+        title: t("confirm_title"),
+        body: t("confirm_mismatch").replace("{input}", input).replace("{sum}", bucketSum),
+        confirmText: t("confirm_ok"), cancelText: t("confirm_cancel"), onConfirm: doSave,
+      });
+    } else { await doSave(); }
+    return;
+  }
+
+  if (action === "save-rework") {
+    const caseId = document.getElementById("rwCaseSelect").value;
+    const pmRange = document.getElementById("rwRangeSelect").value;
+    STATE.rwCaseSelectValue = caseId; STATE.rwRangeSelectValue = pmRange;
+    const input = Number(document.getElementById("rwInput").value) || 0;
+    const ok = Number(document.getElementById("rwOk").value) || 0;
+    const docId = (STATE.editing && STATE.editing.collection === "sortRework")
+      ? STATE.editing.id : `${STATE.selectedDate}__${caseId}__${pmRange}`;
+    const data = { date: STATE.selectedDate, caseId, pmRange, input, ok, updatedAt: new Date().toISOString() };
+    const doSave = async () => {
+      const saved = await dbSet("sortRework", docId, data);
+      if (saved) { showToast(t("toast_saved")); STATE.editing = null; }
+    };
+    if (ok > input) {
+      showModal({
+        title: t("confirm_title"),
+        body: t("confirm_mismatch").replace("{input}", input).replace("{sum}", ok),
+        confirmText: t("confirm_ok"), cancelText: t("confirm_cancel"), onConfirm: doSave,
+      });
+    } else { await doSave(); }
+    return;
+  }
+
+  if (action === "save-shipment") {
+    const type = document.getElementById("shipTypeSelect").value;
+    const site = document.getElementById("shipSiteInput").value.trim();
+    STATE.shipTypeSelectValue = type; STATE.shipSiteValue = site;
+    const normal = Number(document.getElementById("shipNormal").value) || 0;
+    const resort67 = Number(document.getElementById("shipResort").value) || 0;
+    const decapRework = Number(document.getElementById("shipDecapRw").value) || 0;
+    const sortRework = Number(document.getElementById("shipSortRw").value) || 0;
+    const docId = (STATE.editing && STATE.editing.collection === "shipment")
+      ? STATE.editing.id : `${STATE.selectedDate}__${type}__${sanitizeIdPart(site)}`;
+    const data = { date: STATE.selectedDate, type, site, normal, resort67, decapRework, sortRework, updatedAt: new Date().toISOString() };
+    const saved = await dbSet("shipment", docId, data);
+    if (saved) { showToast(t("toast_saved")); STATE.editing = null; }
+    return;
+  }
+
+  if (action === "reset-form") { STATE.editing = null; render(); return; }
+
+  if (action === "toggle-targets") { STATE.targetsEditing = !STATE.targetsEditing; render(); return; }
+
+  if (action === "save-targets") {
+    const data = {};
+    document.querySelectorAll(".targetInput").forEach(el => {
+      const v = el.value.trim();
+      if (v !== "") data[el.dataset.target] = Number(v) || 0;
+    });
+    const saved = await dbSetDoc("meta/targets", data);
+    if (saved) { showToast(t("toast_saved")); STATE.targetsEditing = false; }
+    return;
+  }
+
+  if (action === "export-image") { await exportImage(); return; }
+  if (action === "export-excel") { await exportExcel(); return; }
+}
+
+/* ------------------------------- exports --------------------------------- */
+async function exportImage() {
+  const el = document.getElementById("reportCapture");
+  if (!el || typeof html2canvas === "undefined") { showToast(t("toast_error")); return; }
+  showToast(t("exporting"));
+  try {
+    const bg = getComputedStyle(document.body).backgroundColor;
+    const canvas = await html2canvas(el, { backgroundColor: bg, scale: 2, useCORS: true });
+    canvas.toBlob((blob) => {
+      if (!blob) { showToast(t("toast_error")); return; }
+      browserDownload(`report_${todayStr()}.png`, blob);
+    }, "image/png");
+  } catch (e) { showToast(t("toast_error")); }
+}
+
+async function exportExcel() {
+  if (typeof XLSX === "undefined") { showToast(t("toast_error")); return; }
+  showToast(t("exporting"));
+  try {
+    const wb = XLSX.utils.book_new();
+
+    const normalRows = Object.keys(CACHE.production_normal).sort().map(date => {
+      const r = CACHE.production_normal[date];
+      return { date, input: r.input || 0, ok: r.ok || 0 };
+    });
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(normalRows), "정규생산");
+
+    const decapRows = Object.keys(CACHE.production_decap).sort().map(date => {
+      const r = CACHE.production_decap[date];
+      return { date, input: r.input || 0, ok: r.ok || 0 };
+    });
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(decapRows), "디캡리웍");
+
+    const pmRows = CACHE.pmSelection.slice().sort((a, b) => (a.date || "").localeCompare(b.date || "")).map(r => {
+      const c = caseById(PM_CASES, r.caseId);
+      const b = r.buckets || {};
+      return {
+        date: r.date, case: c ? c.ko : r.caseId, input: r.input || 0,
+        "ge34": b.ge34 || 0, "30_34": b.r30_34 || 0, "28_30": b.r28_30 || 0,
+        "25_28": b.r25_28 || 0, "23_25": b.r23_25 || 0, "lt23": b.lt23 || 0,
+        "폐기": r.scrap || 0,
+      };
+    });
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(pmRows), "PM선별");
+
+    const rwRows = CACHE.sortRework.slice().sort((a, b) => (a.date || "").localeCompare(b.date || "")).map(r => {
+      const c = caseById(REWORK_CASES, r.caseId);
+      const rg = caseById(PM_RANGES, r.pmRange);
+      return { date: r.date, case: c ? c.ko : r.caseId, pmRange: rg ? rg.ko : r.pmRange, input: r.input || 0, ok: r.ok || 0 };
+    });
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rwRows), "선별리웍");
+
+    const shipRows = CACHE.shipment.slice().sort((a, b) => (a.date || "").localeCompare(b.date || "")).map(r => {
+      const ty = caseById(SHIPMENT_TYPES, r.type);
+      return {
+        date: r.date, type: ty ? ty.ko : r.type, site: r.site || "",
+        normal: r.normal || 0, resort67: r.resort67 || 0, decapRework: r.decapRework || 0, sortRework: r.sortRework || 0,
+      };
+    });
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(shipRows), "출하실적");
+
+    const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+    const blob = new Blob([wbout], { type: "application/octet-stream" });
+    browserDownload(`재검진행사항_${todayStr()}.xlsx`, blob);
+  } catch (e) { showToast(t("toast_error")); }
+}
+
+/* -------------------------------- init ------------------------------------ */
+function boot() {
+  wireEvents();
+  render();
+  initDb();
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", boot);
+} else {
+  boot();
+}
+
+</script>
+</body>
+</html>
