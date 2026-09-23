@@ -1,74 +1,209 @@
-# Theo dõi tiến độ tái kiểm — Bản triển khai trên máy chủ nội bộ
+# Theo dõi tiến độ tái kiểm — triển khai với MariaDB
 
-## Đây là gì (tóm tắt dành cho quản trị viên máy chủ)
+Ứng dụng gồm một giao diện `index.html`, backend Flask trong `app.py` và cơ sở dữ liệu MariaDB.
+Frontend không cần build bằng npm.
 
-- **Ứng dụng web**: chỉ có một file `index.html`. Máy chủ Flask sẽ phục vụ file này trực tiếp. Không cần build riêng (npm, v.v.).
-- **CSDL**: `data.db` — chỉ là một file SQLite duy nhất. Không cần cài đặt máy chủ CSDL riêng như MySQL/MSSQL.
-  Bản thân file này chính là cơ sở dữ liệu. **Đối tượng cần sao lưu định kỳ chỉ là file này.**
-- **Máy chủ**: `app.py` — một web server rất nhỏ được viết bằng Python (Flask).
-  - `/` : màn hình ứng dụng web
-  - `/api/all` `/api/save` `/api/delete` : các API đọc/ghi dữ liệu
-- Nếu muốn kết nối với CSDL khác đang dùng (ví dụ MSSQL, MySQL), chỉ cần chỉnh sửa hàm
-  `get_conn()` và 3 hàm SQL (`api_all`, `api_save`, `api_delete`) trong `app.py` cho phù hợp
-  với CSDL đó. Vì mô hình dữ liệu chỉ có một dạng bảng duy nhất `(phân loại, ID tài liệu,
-  dữ liệu JSON)`, nên dù chuyển sang CSDL nào thì cấu trúc vẫn giống nhau.
+## 1. Yêu cầu
 
-## Yêu cầu hệ thống
+- Python 3.9 trở lên
+- MariaDB 10.5 trở lên
+- Máy chạy ứng dụng kết nối được tới cổng MariaDB, mặc định là `3306`
 
-- Python 3.9 trở lên (kiểm tra xem máy chủ nội bộ đã có sẵn chưa bằng lệnh `python3 --version`)
-- Ngoài ra không cần kết nối Internet bên ngoài (toàn bộ logic của ứng dụng chạy hoàn toàn
-  ở local. Tuy nhiên, khi nhấn nút xuất ảnh/Excel trên trình duyệt, ứng dụng sẽ tải 2 thư viện
-  (xlsx, html2canvas) từ `cdnjs.cloudflare.com` — nếu mạng nội bộ chặn Internet bên ngoài thì
-  chỉ hai nút này không hoạt động, các chức năng còn lại vẫn hoạt động bình thường. Nếu cần,
-  tôi có thể tải các file này về và đổi sang đường dẫn local, cứ cho tôi biết nếu cần.)
+Hai chức năng xuất Excel và xuất ảnh sử dụng thư viện từ CDN. Nếu mạng nội bộ chặn Internet,
+các chức năng nhập liệu, tổng hợp và báo cáo vẫn hoạt động nhưng hai nút xuất file có thể không dùng được.
 
-## Cách chạy
+## 2. Tạo database và tài khoản
+
+Mở file `mariadb_setup.sql`, thay `CHANGE_ME_WITH_A_STRONG_PASSWORD`, rồi chạy bằng tài
+khoản quản trị MariaDB:
 
 ```bash
-cd jingum-server-app
+mariadb -u root -p < mariadb_setup.sql
+```
+
+Hoặc có thể tạo thủ công bằng các câu lệnh tương đương:
+
+```sql
+CREATE DATABASE jingum
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_unicode_ci;
+
+CREATE USER 'jingum'@'%' IDENTIFIED BY 'thay-mat-khau-manh-tai-day';
+GRANT SELECT, INSERT, UPDATE, DELETE, CREATE ON jingum.* TO 'jingum'@'%';
+FLUSH PRIVILEGES;
+```
+
+Nếu ứng dụng chạy cùng máy với MariaDB, có thể thay `'jingum'@'%'` bằng
+`'jingum'@'localhost'` để giới hạn truy cập.
+
+## 3. Cấu hình ứng dụng
+
+Sao chép `.env.example` thành `.env` và sửa thông tin thực tế:
+
+```dotenv
+PORT=8000
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_NAME=jingum
+DB_USER=jingum
+DB_PASSWORD=mat-khau-thuc-te
+DB_CONNECT_TIMEOUT=10
+```
+
+File `.env` đã được đưa vào `.gitignore`; không commit mật khẩu lên Git.
+
+## 4. Cài đặt
+
+```powershell
+python -m venv .venv
+.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
+```
+
+Nếu cần chuyển một `data.db` đang sử dụng, thực hiện mục 5 **trước lần đầu chạy
+`python app.py`**. Nếu không có dữ liệu SQLite cần chuyển, khởi động ứng dụng:
+
+```powershell
 python app.py
 ```
 
-Cổng mặc định là **8000**. Nếu muốn dùng cổng khác:
+Ứng dụng tự tạo bảng `records` nếu chưa có. Nếu bảng đang rỗng, 70 bản ghi trong
+`seed_data.json` sẽ được nạp tự động. Sau đó truy cập:
 
-```bash
-PORT=9000 python app.py
+```text
+http://IP_MAY_CHU:8000
 ```
 
-Sau khi chạy, truy cập `http://IP_máy_chủ:8000` từ mạng nội bộ là được. Giống như các dự án
-nội bộ khác (ví dụ kiểm tra PQC), nếu quản trị viên máy chủ gắn một địa chỉ truy cập chính thức
-(tên miền/reverse proxy) thì mọi người có thể dùng chung địa chỉ đó.
+## 5. Chuyển dữ liệu từ SQLite cũ
 
-Nếu cần **chạy liên tục 24/7** (để mọi người có thể nhập dữ liệu bất cứ lúc nào), hãy nhờ
-quản trị viên máy chủ đăng ký theo một trong các cách sau:
-- Linux: đăng ký dịch vụ `systemd`, hoặc chạy thường trực bằng `pm2`/`supervisor`
-- Windows Server: dùng "Task Scheduler" để tự khởi động khi boot máy, hoặc kết hợp IIS + wfastcgi
+Trước khi chuyển, sao lưu cả `data.db` và database MariaDB.
 
-## Dữ liệu ban đầu
+Thực hiện bước này trước lần đầu khởi động ứng dụng để MariaDB còn trống. Sau khi đã
+cấu hình `.env`, chạy:
 
-File `seed_data.json` chứa dữ liệu được lấy từ file Excel hiện có (재검_진행사항 / tiến độ tái kiểm).
-Khi chạy lần đầu mà chưa có file `data.db`, dữ liệu này sẽ tự động được nạp vào một lần duy nhất.
-Nếu `data.db` đã tồn tại rồi thì sẽ không bị đụng đến, nên có thể yên tâm khởi động lại.
+```powershell
+python migrate_sqlite_to_mariadb.py data.db
+```
 
-## Đăng nhập / Phân quyền
+Script chỉ đọc SQLite và sẽ dừng nếu MariaDB đã có dữ liệu. Nếu chắc chắn muốn ghi đè
+các bản ghi trùng khóa trong MariaDB:
 
-Theo yêu cầu, bất kỳ ai cũng có thể truy cập và nhập dữ liệu mà không cần đăng nhập riêng.
-Nếu chỉ để địa chỉ này truy cập được trong mạng nội bộ thì bản thân điều đó đã là một hình thức
-kiểm soát truy cập. (Nếu có kế hoạch mở cho truy cập từ bên ngoài, nên thêm ít nhất một lớp bảo
-vệ bằng mật khẩu — nếu cần, tôi có thể bổ sung thêm.)
+```powershell
+python migrate_sqlite_to_mariadb.py data.db --overwrite
+```
 
-## Cách màn hình được cập nhật
+Sau khi migration thành công, kiểm tra số lượng:
 
-Để nhiều người có thể thấy dữ liệu người khác nhập cùng lúc mà không cần tải lại trang,
-**cứ mỗi 20 giây ứng dụng sẽ tự động lấy lại dữ liệu mới nhất từ máy chủ** (không phải là
-thông báo thời gian thực, nhưng về cơ bản hoạt động gần như thời gian thực). Nếu muốn thay đổi
-nhanh hơn/chậm hơn, chỉnh giá trị 20000 (đơn vị ms) trong đoạn
-`setInterval(refreshFromServer, 20000)` bên trong file `index.html`.
+```sql
+SELECT collection, COUNT(*) AS total
+FROM jingum.records
+GROUP BY collection;
+```
 
-## Khi có thắc mắc
+Không xóa `data.db` cho tới khi đã kiểm tra giao diện, số liệu tổng hợp và bản sao lưu.
 
-- Nếu thấy cảnh báo màu đỏ ở đầu màn hình ("Không thể kết nối đến máy chủ…") → có nghĩa là
-  `app.py` đang tắt, hoặc địa chỉ/cổng không đúng.
-- Nếu dữ liệu có vẻ bất thường → hãy mở file `data.db` để kiểm tra (dùng công cụ xem SQLite,
-  ví dụ DB Browser for SQLite), hoặc gửi lại file cho tôi để tôi kiểm tra giúp.
+## 6. API và mô hình dữ liệu
+
+- `GET /api/all`: đọc toàn bộ dữ liệu
+- `POST /api/save`: thêm hoặc cập nhật một bản ghi
+- `POST /api/delete`: xóa một bản ghi
+
+Bảng `records` lưu khóa `(collection, doc_id)`, JSON nghiệp vụ trong cột `data` và thời gian
+cập nhật UTC trong `updated_at`. MariaDB sử dụng InnoDB và `utf8mb4` để lưu đầy đủ tiếng
+Việt và tiếng Hàn.
+
+## 7. Chạy thường trực bằng PM2
+
+Cấu hình PM2 chạy `serve.py` bằng Waitress, không dùng Flask development server. Cài Node.js,
+PM2 và các thư viện Python:
+
+```bash
+npm install -g pm2
+python -m venv .venv
+```
+
+Linux:
+
+```bash
+source .venv/bin/activate
+pip install -r requirements.txt
+pm2 start ecosystem.config.js
+pm2 status
+pm2 logs Jingum_Web
+```
+
+Windows Server PowerShell, chạy bằng tài khoản sẽ vận hành ứng dụng:
+
+```powershell
+Set-ExecutionPolicy -Scope Process Bypass
+.\deploy_windows.ps1
+```
+
+Lần chạy đầu, script tạo `.env` rồi dừng. Sửa mật khẩu MariaDB trong `.env`, sau đó chạy
+lại `deploy_windows.ps1`. Script sẽ tạo `.venv`, cài dependency, cài PM2 nếu cần, khởi động
+`Jingum_Web` và chạy `pm2 save`.
+
+Sau khi kiểm tra ứng dụng hoạt động, lưu danh sách tiến trình:
+
+```bash
+pm2 save
+```
+
+Trên Linux, chạy `pm2 startup`, sau đó sao chép và thực thi chính xác lệnh `sudo` mà PM2
+in ra. Cuối cùng chạy lại `pm2 save`. Khi cập nhật mã nguồn:
+
+```bash
+pip install -r requirements.txt
+pm2 restart Jingum_Web
+pm2 save
+```
+
+Các lệnh vận hành thường dùng:
+
+```bash
+pm2 logs Jingum_Web --lines 100
+pm2 monit
+pm2 restart Jingum_Web
+pm2 stop Jingum_Web
+pm2 delete Jingum_Web
+```
+
+### Tự khởi động trên Windows Server
+
+PM2 không cung cấp startup hook Windows gốc, vì vậy dùng Task Scheduler:
+
+1. Mở **Task Scheduler** → **Create Task**.
+2. Tên task: `Jingum PM2 Startup`.
+3. Chọn **Run whether user is logged on or not** và **Run with highest privileges**.
+4. Chọn đúng tài khoản Windows đã chạy `deploy_windows.ps1`/`pm2 save`.
+5. Trigger: **At startup**, nên đặt delay 30 giây để MariaDB khởi động trước.
+6. Action → Program: `powershell.exe`.
+7. Arguments:
+
+```text
+-NoProfile -ExecutionPolicy Bypass -File "C:\duong-dan\jingum-server-app\pm2_resurrect_windows.ps1"
+```
+
+8. Start in: `C:\duong-dan\jingum-server-app`.
+
+Khởi động lại Windows Server rồi kiểm tra bằng `pm2 status` và
+`Invoke-WebRequest http://127.0.0.1:8000/api/all`. Nếu cần cho máy khác trong mạng truy cập,
+mở PowerShell bằng quyền Administrator:
+
+```powershell
+New-NetFirewallRule -DisplayName "Jingum Server 8000" -Direction Inbound -Protocol TCP -LocalPort 8000 -Action Allow
+```
+
+Nếu Python virtual environment nằm ở vị trí khác, đặt biến `JINGUM_PYTHON` thành đường dẫn
+tuyệt đối tới Python trước khi chạy `pm2 start`.
+
+## 8. Vận hành và sao lưu
+
+PM2 quản lý tiến trình Waitress; nếu cần HTTPS hoặc tên miền nội bộ, đặt Nginx/IIS làm reverse
+proxy phía trước. Chỉ mở cổng MariaDB cho máy chạy ứng dụng, không công khai cổng `3306` ra Internet.
+
+Nên sao lưu MariaDB định kỳ, ví dụ:
+
+```powershell
+mariadb-dump -h 127.0.0.1 -u jingum -p --single-transaction jingum > jingum_backup.sql
+```
