@@ -3,7 +3,9 @@
 
 구성:
   - Flask 웹 서버가 index.html(프런트엔드)을 그대로 서빙합니다.
-  - 데이터는 MariaDB의 records 테이블에 저장됩니다.
+  - 데이터는 SQLite 파일 하나(data.db)에 저장됩니다. 별도 DB 서버 설치가
+    필요 없습니다 (MySQL/MSSQL 등 회사에서 이미 쓰는 DB가 있다면 SAVE_SQL /
+    아래 DB 함수들만 바꿔서 옮겨 꽂을 수 있도록 최대한 단순하게 만들었습니다).
   - 모든 레코드는 (collection, doc_id, data-JSON) 한 가지 형태로 저장됩니다.
     프런트엔드가 쓰는 "카테고리별 문서" 구조와 1:1로 대응됩니다.
 
@@ -12,26 +14,42 @@
   python app.py
   (기본 포트 8000 — 아래 PORT 값 또는 환경변수 PORT로 변경 가능)
 
-최초 실행 시 records 테이블이 비어 있고 seed_data.json이 있으면
-자동으로 한 번만 불러와 채워둡니다.
+최초 실행 시 seed_data.json이 있으면 자동으로 한 번만 불러와 채워둡니다
+(엑셀에서 가져온 기존 데이터). data.db가 이미 있으면 다시 불러오지 않습니다.
 """
 
 import json
 import os
+import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
 
 from flask import Flask, jsonify, request, send_from_directory
 
-from database import get_conn
-
 BASE_DIR = Path(__file__).resolve().parent
+DB_PATH = BASE_DIR / "data.db"
 SEED_PATH = BASE_DIR / "seed_data.json"
 STATIC_FILE = "index.html"
 PORT = int(os.environ.get("PORT", 8000))
 
-# Only index.html is served explicitly; project and configuration files stay private.
-app = Flask(__name__, static_folder=None)
+# 정적 파일은 static/ 폴더만 공개합니다 (data.db, app.py 등은 외부에 노출되지 않음)
+app = Flask(__name__, static_folder=str(BASE_DIR / "static"), static_url_path="/static")
+
+
+def get_conn():
+    conn = sqlite3.connect(DB_PATH)
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS records (
+            collection TEXT NOT NULL,
+            doc_id TEXT NOT NULL,
+            data TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            PRIMARY KEY (collection, doc_id)
+        )
+        """
+    )
+    return conn
 
 
 def seed_if_empty():
@@ -78,6 +96,7 @@ def api_all():
         "shipment": [],
         "targets": {},
         "report": {"comment": ""},
+        "reportHistory": [],
     }
     for collection, doc_id, data_json in rows:
         data = json.loads(data_json)
@@ -95,6 +114,8 @@ def api_all():
             out["targets"] = data
         elif collection == "meta" and doc_id == "report":
             out["report"] = data
+        elif collection == "reportHistory":
+            out["reportHistory"].append({**data, "id": doc_id})
     return jsonify(out)
 
 
@@ -136,8 +157,11 @@ def api_delete():
     return jsonify({"ok": True})
 
 
+# 어떤 방식으로 실행하든(python app.py / waitress / gunicorn) 시작 시 한 번 테이블 생성 + 최초 데이터 적재
+get_conn().close()
+seed_if_empty()
+
+
 if __name__ == "__main__":
-    get_conn().close()  # 테이블 생성 보장
-    seed_if_empty()
     print(f"재검 진행 상황 트래킹 서버 시작 — http://0.0.0.0:{PORT} (사내망에서는 서버 IP:{PORT} 로 접속)")
     app.run(host="0.0.0.0", port=PORT, debug=False)
