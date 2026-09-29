@@ -309,7 +309,7 @@ table.rpt td.rpt-progress{position:relative; text-align:right;}
 .rpt-progress .bar{position:absolute; left:0; top:0; bottom:0; background:linear-gradient(90deg,#d81b9c,#f3a6d6);}
 .rpt-progress .txt{position:relative; font-size:20px; font-weight:700; color:#000;}
 table.rpt-ship{width:100%; border-collapse:collapse; table-layout:fixed; font-size:20px; color:#000;}
-table.rpt-ship th, table.rpt-ship td{border:1px solid #8f8f8f; padding:6px 6px; height:42px; font-weight:700; text-align:right; line-height:1.15;}
+table.rpt-ship th, table.rpt-ship td{border:1px solid #8f8f8f; padding:6px 8px; height:44px; font-weight:700; text-align:right; line-height:1.25;}
 table.rpt-ship th{background:#DCE6F1; text-align:center;}
 table.rpt-ship th:first-child, table.rpt-ship td:first-child{text-align:center;}
 table.rpt-ship tr.total-row td{background:#C5D0E6;}
@@ -365,7 +365,7 @@ const I18N = {
     field_site: "SITE",
     field_qty_normal: "신규",
     field_qty_resort: "재검(6~7월)",
-    field_qty_decaprw: "디캡리웍",
+    field_qty_decaprw: "디캡 리웍",
     field_qty_sortrw: "선별리웍",
     field_total_auto: "합계(자동계산)",
     save_btn: "저장",
@@ -426,7 +426,8 @@ const I18N = {
     exporting: "내보내는 중…",
     report_pm_section: "P/M 선별",
     report_decap_section: "디캡 리웍",
-    report_rework_section: "선별 리웍",
+    report_rework_section: "선별 재검",
+    report_label_resort67: "6~7월<br>생산품",
     report_shipment_section: "출하 실적",
     target_qty: "대상수",
     inspected_qty: "검사수",
@@ -1161,12 +1162,15 @@ function renderShipmentEntryList(entries) {
   </div>`;
 }
 /* ============================ Summary view =============================== */
-function shipmentTableHtml(ship, cls, includeRatio) {
+function shipmentTableHtml(ship, cls, includeRatio, headerOverrides) {
+  const ho = headerOverrides || {};
+  const resortLabel = (ho.resort67 || t("field_qty_resort")).replace("(", "<br>(");
+  const sortrwLabel = ho.sortrw || t("field_qty_sortrw");
   const g = ship.grand;
   const rp = (v) => g.total ? pct(v, g.total).toFixed(1) + "%" : "-";
   return `<table class="${cls}" style="table-layout:fixed;">
     <colgroup><col style="width:18%"><col><col><col><col><col></colgroup>
-    <thead><tr><th>${t("field_type")}</th><th>${t("field_qty_normal")}</th><th>${t("field_qty_resort").replace("(", "<br>(")}</th><th>${t("field_qty_decaprw")}</th><th>${t("field_qty_sortrw")}</th><th>${t("grand_total")}</th></tr></thead>
+    <thead><tr><th>${t("field_type")}</th><th>${t("field_qty_normal")}</th><th>${resortLabel}</th><th>${t("field_qty_decaprw")}</th><th>${sortrwLabel}</th><th>${t("grand_total")}</th></tr></thead>
     <tbody>
     ${SHIPMENT_TYPES.map(ty => {
       const b = ship.byType[ty.id];
@@ -1507,7 +1511,7 @@ function renderReportView() {
       ], "cat-yellow")}
 
       <div class="rpt-h">${t("report_shipment_section")}</div>
-      ${shipmentTableHtml(ship, "rpt-ship", true)}
+      ${shipmentTableHtml(ship, "rpt-ship", true, { resort67: t("report_label_resort67"), sortrw: t("report_rework_section") })}
     </div>
     </div>
 
