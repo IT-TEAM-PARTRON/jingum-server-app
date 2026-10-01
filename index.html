@@ -283,6 +283,8 @@ table.rpt th, table.rpt td{padding:6px 8px; line-height:1.25; height:44px; font-
 table.rpt th.cat-label{width:18.3%; background:#fff; text-align:center; border:2px solid #000; white-space:nowrap;}
 table.rpt th.cat-label.cat-blue{background:#BFE3F7;}
 table.rpt th.cat-label.cat-yellow{background:#FFF2A8;}
+table.rpt th.cat-label.cat-baseline{background:#E6D9F7;}
+table.rpt tr.c-baseline > :not(.remark-cell):not(.cat-label){background:#E6D9F7;}
 table.rpt th.lbl{width:13.4%; text-align:left;}
 table.rpt td.val{width:15.9%; text-align:right;}
 table.rpt td.pct{width:12.2%; text-align:right;}
@@ -405,6 +407,7 @@ const I18N = {
     target_save_btn: "저장",
     rework_target_auto_hint: "선별 리웍의 대상수는 P/M 선별에서 해당 PM 구간으로 판정된 누적 수량에서 자동 계산되어 별도로 입력하지 않습니다.",
     decap_baseline_label: "디캡 리웍 초기 보유량 (기초재고)",
+    decap_baseline_label_short: "기존보유",
     decap_target_auto_hint: "디캡 리웍 목표(대상)수량 = 이 초기 보유량 + P/M 선별에서 <23으로 판정된 누적 수량(자동 계산)입니다.",
     progress_label: "진척률",
     cumulative_input: "누적 Input",
@@ -496,6 +499,7 @@ const I18N = {
     target_save_btn: "Lưu",
     rework_target_auto_hint: "Số lượng mục tiêu của Rework phân loại được tự động tính từ số lượng lũy kế đã phân loại vào khoảng PM tương ứng ở bước Phân loại P/M, không cần nhập riêng.",
     decap_baseline_label: "Tồn kho ban đầu Rework Decap",
+    decap_baseline_label_short: "Tồn kho ban đầu",
     decap_target_auto_hint: "Số lượng mục tiêu Rework Decap = Tồn kho ban đầu này + số lượng lũy kế được phân loại <23 ở bước Phân loại P/M (tự động tính).",
     progress_label: "Tỷ lệ tiến độ",
     cumulative_input: "Input lũy kế",
@@ -715,6 +719,7 @@ async function refreshFromServer(preserveForm) {
   if (preserveForm && ae && ["INPUT", "SELECT", "TEXTAREA"].includes(ae.tagName) && ae.closest && ae.closest("#content")) return;
   render();
   if (snap) restoreFormValues(snap);
+  if (STATE.dbReady) maybeAutoSaveHistory(); // fire-and-forget: today's 일별 기록 stays in sync automatically
 }
 
 /* Polls the server periodically so other people's entries show up without
@@ -1434,6 +1439,28 @@ function computeReportMetrics() {
   const decapProgress = decapTarget ? pct(prodDecap.sumInput, decapTarget) : null;
   const decapOkPct = prodDecap.sumInput > 0 ? pct(prodDecap.sumOk, prodDecap.sumInput) : null;
   const decapNgPct = prodDecap.sumInput > 0 ? pct(Math.max(0, prodDecap.sumInput - prodDecap.sumOk), prodDecap.sumInput) : null;
+
+  // 디캡리웍: "기존보유"(최초 적재분)와 "진행분"(이후 매일 P/M<23에서 들어오는 분)을 보고용에서는 분리해서 보여줍니다.
+  const DECAP_BASELINE_DATE = "2026-08-19";
+  const decapBaselineEntry = CACHE.production_decap[DECAP_BASELINE_DATE] || null;
+  const decapBaselineInput = decapBaselineEntry ? (Number(decapBaselineEntry.input) || 0) : 0;
+  const decapBaselineOk = decapBaselineEntry ? (Number(decapBaselineEntry.ok) || 0) : 0;
+  const decapBaselineNg = Math.max(0, decapBaselineInput - decapBaselineOk);
+  const decapBaselineOkPct = decapBaselineInput > 0 ? pct(decapBaselineOk, decapBaselineInput) : null;
+  const decapBaselineNgPct = decapBaselineInput > 0 ? pct(decapBaselineNg, decapBaselineInput) : null;
+
+  let decapOngoingInput = 0, decapOngoingOk = 0;
+  Object.keys(CACHE.production_decap).forEach((d) => {
+    if (d === DECAP_BASELINE_DATE) return;
+    const r = CACHE.production_decap[d];
+    decapOngoingInput += Number(r.input) || 0;
+    decapOngoingOk += Number(r.ok) || 0;
+  });
+  const decapOngoingTarget = pmTotalLt23;
+  const decapOngoingProgress = decapOngoingTarget ? pct(decapOngoingInput, decapOngoingTarget) : null;
+  const decapOngoingOkPct = decapOngoingInput > 0 ? pct(decapOngoingOk, decapOngoingInput) : null;
+  const decapOngoingNgPct = decapOngoingInput > 0 ? pct(Math.max(0, decapOngoingInput - decapOngoingOk), decapOngoingInput) : null;
+
   const pmGe25Pct = pmTotalInput > 0 ? pct(pmTotalGe25, pmTotalInput) : null;
   const pm2325Pct = pmTotalInput > 0 ? pct(pmTotal23_25, pmTotalInput) : null;
   const pmLt23Pct = pmTotalInput > 0 ? pct(pmTotalLt23, pmTotalInput) : null;
@@ -1446,6 +1473,8 @@ function computeReportMetrics() {
     pmTotalInput, pmTotalGe25, pmTotal23_25, pmTotalLt23, pmTargetTotal, pmTotalScrap, pmLastDate,
     pmTargetReport, pmProgress, rwLastDate, rangeTargets, rwTargetTotal, rwTotalInput, rwTotalOk,
     rwProgress, rwOkPct, rwNgPct, decapTarget, decapProgress, decapOkPct, decapNgPct,
+    decapBaselineInput, decapBaselineOk, decapBaselineNg, decapBaselineOkPct, decapBaselineNgPct,
+    decapOngoingInput, decapOngoingOk, decapOngoingTarget, decapOngoingProgress, decapOngoingOkPct, decapOngoingNgPct,
     pmGe25Pct, pm2325Pct, pmLt23Pct, asOf,
   };
 }
@@ -1455,11 +1484,13 @@ function renderReportView() {
   const {
     prodDecap, ship, pmTotalInput, pmTotalGe25, pmTotal23_25, pmTotalLt23,
     pmTargetReport, pmProgress, rwTargetTotal, rwTotalInput, rwTotalOk, rwProgress, rwOkPct, rwNgPct,
-    decapTarget, decapProgress, decapOkPct, decapNgPct, pmGe25Pct, pm2325Pct, pmLt23Pct, asOf,
+    decapBaselineInput, decapBaselineOk, decapBaselineNg, decapBaselineOkPct, decapBaselineNgPct,
+    decapOngoingInput, decapOngoingOk, decapOngoingTarget, decapOngoingProgress, decapOngoingOkPct, decapOngoingNgPct,
+    pmGe25Pct, pm2325Pct, pmLt23Pct, asOf,
   } = m;
 
   const remarks = (CACHE.report && CACHE.report.remarks) || {};
-  const rc = (key) => `<td class="remark-cell"><input type="text" class="row-remark" data-key="${key}" value="${(remarks[key] || "").replace(/"/g, "&quot;")}" placeholder="${t("report_comment")}"></td>`;
+  const rc = (key) => `<td class="remark-cell"><input type="text" class="row-remark" data-key="${key}" value="${(remarks[key] || "").replace(/"/g, "&quot;")}"></td>`;
   const pc = (v) => (v !== null && v !== undefined) ? v.toFixed(1) + "%" : "";
 
   // rows: {cls, label, val, pct, key} or {label, progress, key}
@@ -1477,7 +1508,6 @@ function renderReportView() {
       <div style="display:flex;gap:8px;">
         <button class="btn" data-action="export-image">${t("export_image_btn")}</button>
         <button class="btn" data-action="export-excel">${t("export_excel_btn")}</button>
-        <button class="btn primary" data-action="save-history">${t("save_history_btn")}</button>
       </div>
     </div>
     <div style="overflow-x:auto;">
@@ -1494,14 +1524,6 @@ function renderReportView() {
         { cls: "c-blue", label: "&lt;23", val: numFmt(pmTotalLt23), pct: pc(pmLt23Pct), key: "pm_lt23" },
       ])}
 
-      ${block(t("report_decap_section") + "<br>(P/M&lt;23)", [
-        { cls: "c-blue", label: t("target_qty"), val: decapTarget ? numFmt(decapTarget) : "-", key: "decap_target" },
-        { label: "Input", val: numFmt(prodDecap.sumInput), key: "decap_input" },
-        { label: t("progress_label"), progress: decapProgress, key: "decap_progress" },
-        { cls: "c-ok", label: "OK", val: numFmt(prodDecap.sumOk), pct: pc(decapOkPct), key: "decap_ok" },
-        { cls: "c-gray", label: "NG", val: numFmt(Math.max(0, prodDecap.sumInput - prodDecap.sumOk)), pct: pc(decapNgPct), key: "decap_ng" },
-      ], "cat-blue")}
-
       ${block(t("report_rework_section") + "<br>(P/M≥25)", [
         { cls: "c-yellow", label: t("target_qty"), val: rwTargetTotal ? numFmt(rwTargetTotal) : "-", key: "rw_target" },
         { label: "Input", val: numFmt(rwTotalInput), key: "rw_input" },
@@ -1509,6 +1531,22 @@ function renderReportView() {
         { cls: "c-ok", label: "OK", val: numFmt(rwTotalOk), pct: pc(rwOkPct), key: "rw_ok" },
         { cls: "c-gray", label: "NG", val: numFmt(Math.max(0, rwTotalInput - rwTotalOk)), pct: pc(rwNgPct), key: "rw_ng" },
       ], "cat-yellow")}
+
+      ${block(t("report_decap_section") + "<br>(P/M&lt;23)", [
+        { cls: "c-blue", label: t("target_qty"), val: decapOngoingTarget ? numFmt(decapOngoingTarget) : "-", key: "decap_target" },
+        { label: "Input", val: numFmt(decapOngoingInput), key: "decap_input" },
+        { label: t("progress_label"), progress: decapOngoingProgress, key: "decap_progress" },
+        { cls: "c-ok", label: "OK", val: numFmt(decapOngoingOk), pct: pc(decapOngoingOkPct), key: "decap_ok" },
+        { cls: "c-gray", label: "NG", val: numFmt(Math.max(0, decapOngoingInput - decapOngoingOk)), pct: pc(decapOngoingNgPct), key: "decap_ng" },
+      ], "cat-blue")}
+
+      ${block(t("report_decap_section") + `<br>(${t("decap_baseline_label_short")})`, [
+        { cls: "c-baseline", label: t("target_qty"), val: decapBaselineInput ? numFmt(decapBaselineInput) : "-", key: "decap_base_target" },
+        { label: "Input", val: numFmt(decapBaselineInput), key: "decap_base_input" },
+        { label: t("progress_label"), progress: decapBaselineInput ? 100 : null, key: "decap_base_progress" },
+        { cls: "c-ok", label: "OK", val: numFmt(decapBaselineOk), pct: pc(decapBaselineOkPct), key: "decap_base_ok" },
+        { cls: "c-gray", label: "NG", val: numFmt(decapBaselineNg), pct: pc(decapBaselineNgPct), key: "decap_base_ng" },
+      ], "cat-baseline")}
 
       <div class="rpt-h">${t("report_shipment_section")}</div>
       ${shipmentTableHtml(ship, "rpt-ship", true, { resort67: t("report_label_resort67"), sortrw: t("report_rework_section") })}
@@ -1728,31 +1766,50 @@ async function handleAction(action, btn) {
 
   if (action === "export-image") { await exportImage(); return; }
   if (action === "export-excel") { await exportExcel(); return; }
-  if (action === "save-history") { await saveHistorySnapshot(); return; }
 }
 
 /* ------------------------------- exports --------------------------------- */
-/* Snapshots today's report numbers + all row remarks into reportHistory,
-   keyed by the report's 기준일 (asOf date) so re-saving the same day
-   overwrites that day's entry rather than piling up duplicates. */
-async function saveHistorySnapshot() {
-  const m = computeReportMetrics();
-  const dateKey = m.asOf || todayStr();
-  const snapshot = {
-    date: dateKey,
+/* Builds today's (기준일) snapshot from the live numbers. Excludes savedAt so
+   it can be compared against the last-saved entry to decide whether a write
+   is actually needed. */
+function buildHistorySnapshot(m) {
+  return {
+    date: m.asOf,
     pmTarget: m.pmTargetReport, pmInspected: m.pmTotalInput, pmProgress: m.pmProgress,
     pmGe25: m.pmTotalGe25, pm2325: m.pmTotal23_25, pmLt23: m.pmTotalLt23,
-    decapTarget: m.decapTarget, decapInput: m.prodDecap.sumInput, decapProgress: m.decapProgress,
-    decapOk: m.prodDecap.sumOk, decapNg: Math.max(0, m.prodDecap.sumInput - m.prodDecap.sumOk),
+    decapTarget: m.decapOngoingTarget, decapInput: m.decapOngoingInput, decapProgress: m.decapOngoingProgress,
+    decapOk: m.decapOngoingOk, decapNg: Math.max(0, m.decapOngoingInput - m.decapOngoingOk),
+    decapBaseInput: m.decapBaselineInput, decapBaseOk: m.decapBaselineOk, decapBaseNg: m.decapBaselineNg,
     rwTarget: m.rwTargetTotal, rwInput: m.rwTotalInput, rwProgress: m.rwProgress,
     rwOk: m.rwTotalOk, rwNg: Math.max(0, m.rwTotalInput - m.rwTotalOk),
     shipmentTotal: m.ship.grand.total,
     remarks: (CACHE.report && CACHE.report.remarks) || {},
     comment: (CACHE.report && CACHE.report.comment) || "",
-    savedAt: new Date().toISOString(),
   };
-  const saved = await dbSet("reportHistory", dateKey, snapshot);
-  if (saved) showToast(t("toast_saved"));
+}
+
+/* Auto-saves a 일별 기록 snapshot for the current 기준일 whenever the
+   underlying numbers actually change — no button needed. Runs after every
+   data refresh (see part2.js); compares against the last-saved entry
+   (ignoring savedAt) so it writes at most once per real change, which also
+   keeps this from looping against its own write. */
+let autoHistorySaving = false;
+async function maybeAutoSaveHistory() {
+  if (autoHistorySaving) return;
+  const m = computeReportMetrics();
+  if (!m.asOf) return;
+  const snapshot = buildHistorySnapshot(m);
+  const existing = (CACHE.reportHistory || []).find((r) => (r.date || r.id) === m.asOf);
+  if (existing) {
+    const { savedAt, id, ...prev } = existing;
+    if (JSON.stringify(prev) === JSON.stringify(snapshot)) return; // unchanged — nothing to write
+  }
+  autoHistorySaving = true;
+  try {
+    await dbSet("reportHistory", m.asOf, { ...snapshot, savedAt: new Date().toISOString() });
+  } finally {
+    autoHistorySaving = false;
+  }
 }
 
 async function exportImage() {
