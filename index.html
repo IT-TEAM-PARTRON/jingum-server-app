@@ -217,19 +217,28 @@ table.report-table tr.total-row td{font-weight:800; background:var(--rpt-total-b
    always reads well on a phone regardless of the exporter's own screen
    width (KakaoTalk/email recipients mostly view this on mobile). */
 #reportCapture.force-mobile{ width:460px !important; max-width:460px !important; padding:16px !important; }
-#reportCapture.force-mobile .report-cols{ grid-template-columns:1fr !important; gap:16px !important; }
-#reportCapture.force-mobile .report-title{ font-size:23px !important; }
-#reportCapture.force-mobile .report-date{ font-size:14.5px !important; margin-bottom:16px !important; }
-#reportCapture.force-mobile .report-block{ margin-bottom:18px !important; }
-#reportCapture.force-mobile .report-block h3{ font-size:16.5px !important; margin-bottom:8px !important; padding:9px 12px !important; }
-#reportCapture.force-mobile .report-col-title{ font-size:16px !important; margin-bottom:8px !important; }
-#reportCapture.force-mobile table.vtable th,
-#reportCapture.force-mobile table.vtable td{ font-size:16px !important; padding:11px 5px !important; }
-#reportCapture.force-mobile table.vtable td.remark-cell{ display:none !important; }
-#reportCapture.force-mobile table.report-table{ min-width:0 !important; width:100% !important; table-layout:fixed !important; }
-#reportCapture.force-mobile table.report-table th,
-#reportCapture.force-mobile table.report-table td{ font-size:12px !important; padding:7px 3px !important; word-break:break-word; }
-#reportCapture.force-mobile textarea{ font-size:13.5px !important; }
+#reportCapture.force-mobile .rpt-toprow{ flex-direction:column !important; }
+#reportCapture.force-mobile .rpt-title,
+#reportCapture.force-mobile .rpt-remhead{ width:100% !important; flex:none !important; }
+#reportCapture.force-mobile .rpt-remhead{ margin-top:8px !important; }
+#reportCapture.force-mobile .rpt-title{ font-size:18px !important; }
+#reportCapture.force-mobile .rpt-date{ font-size:13px !important; margin-bottom:10px !important; }
+#reportCapture.force-mobile .rpt-block{ margin-bottom:10px !important; }
+#reportCapture.force-mobile .rpt-h{ font-size:16px !important; padding:7px 8px !important; }
+#reportCapture.force-mobile table.rpt{ font-size:13px !important; }
+#reportCapture.force-mobile table.rpt th.cat-label{ font-size:12.5px !important; width:20% !important; }
+#reportCapture.force-mobile table.rpt th,
+#reportCapture.force-mobile table.rpt td{ padding:5px 4px !important; height:auto !important; }
+#reportCapture.force-mobile table.rpt td.remark-cell,
+#reportCapture.force-mobile table.rpt-cust td.remark-cell,
+#reportCapture.force-mobile table.rpt-cust th:last-child{ display:none !important; }
+#reportCapture.force-mobile .progress-cell .txt{ font-size:13px !important; }
+#reportCapture.force-mobile table.rpt-ship,
+#reportCapture.force-mobile table.rpt-cust{ font-size:12px !important; table-layout:fixed !important; }
+#reportCapture.force-mobile table.rpt-ship th,
+#reportCapture.force-mobile table.rpt-ship td,
+#reportCapture.force-mobile table.rpt-cust th,
+#reportCapture.force-mobile table.rpt-cust td{ padding:5px 3px !important; height:auto !important; word-break:break-word; }
 #reportCapture.force-mobile .report-block > div[style*="overflow-x"]{ overflow-x:visible !important; }
 .report-col-title{font-size:16px; font-weight:800; margin-bottom:10px; padding-bottom:7px; border-bottom:3px solid var(--ink);}
 table.vtable{width:100%; border-collapse:collapse; font-size:17px; table-layout:fixed;}
@@ -315,6 +324,13 @@ table.rpt-ship th, table.rpt-ship td{border:1px solid #8f8f8f; padding:6px 8px; 
 table.rpt-ship th{background:#DCE6F1; text-align:center;}
 table.rpt-ship th:first-child, table.rpt-ship td:first-child{text-align:center;}
 table.rpt-ship tr.total-row td{background:#C5D0E6;}
+table.rpt-cust td.remark-cell{text-align:left; font-weight:400; padding:4px 10px; vertical-align:middle;}
+table.rpt-cust td.remark-cell input{
+  width:100%; box-sizing:border-box; border:none; background:transparent;
+  font:inherit; font-size:20px; font-weight:400; color:#000; padding:4px 2px; outline:none;
+}
+table.rpt-cust td.remark-cell input:focus{background:#f4faf7;}
+table.rpt-cust td, table.rpt-cust th{height:48px;}
 
 /* ---- modal / toast ---- */
 .overlay{position:fixed; inset:0; background:rgba(10,14,11,0.42); display:flex; align-items:center; justify-content:center; z-index:100; padding:16px;}
@@ -358,6 +374,7 @@ const I18N = {
     cat_pm: "P/M 선별",
     cat_rework: "선별 리웍",
     cat_shipment: "출하실적",
+    cat_custinput: "고객사 투입 현황",
     field_input: "Input (검사 수)",
     field_ok: "OK",
     field_ng_auto: "NG (자동계산)",
@@ -436,6 +453,17 @@ const I18N = {
     inspected_qty: "검사수",
     site_datalist_hint: "예: SEVT, GUMI",
     normal_case_label: "정규 생산 / 디캡 리웍",
+    field_division: "구분",
+    field_cust_input: "투입수",
+    field_defect_type: "불량유형",
+    field_defect_count: "불량수",
+    add_defect_type_btn: "유형추가",
+    remove_btn: "삭제",
+    report_custinput_title: "고객사(SEVT) 라인 투입 현황",
+    custinput_cumulative: "Input (누적)",
+    custinput_latest: "Input",
+    custinput_ng_cumulative: "NG (누적)",
+    custinput_unit_ppm: "수량 (ppm)",
   },
   vi: {
     appName: "Tiến độ tái kiểm",
@@ -450,6 +478,7 @@ const I18N = {
     cat_pm: "Phân loại P/M",
     cat_rework: "Rework phân loại",
     cat_shipment: "Kết quả xuất hàng",
+    cat_custinput: "Tình hình nhập hàng khách hàng",
     field_input: "Input (số lượng kiểm)",
     field_ok: "OK",
     field_ng_auto: "NG (tự động)",
@@ -527,6 +556,17 @@ const I18N = {
     inspected_qty: "Số đã kiểm",
     site_datalist_hint: "VD: SEVT, GUMI",
     normal_case_label: "Sản xuất chính quy / Rework Decap",
+    field_division: "Phân loại",
+    field_cust_input: "Số lượng nhập",
+    field_defect_type: "Loại lỗi",
+    field_defect_count: "Số lượng lỗi",
+    add_defect_type_btn: "Thêm loại lỗi",
+    remove_btn: "Xóa",
+    report_custinput_title: "Tình hình nhập hàng dây chuyền khách hàng (SEVT)",
+    custinput_cumulative: "Input (lũy kế)",
+    custinput_latest: "Input",
+    custinput_ng_cumulative: "NG (lũy kế)",
+    custinput_unit_ppm: "Số lượng (ppm)",
   }
 };
 
@@ -570,6 +610,20 @@ const SHIPMENT_TYPES = [
 ];
 
 const SHIPMENT_SITES = ["SEVT", "GUMI"];
+
+/* 고객사(SEVT) 라인 투입 현황 */
+const CUST_DIVISIONS = [
+  { id: "assy", ko: "Ass'y Line", vi: "Ass'y Line" },
+  { id: "main", ko: "Main Line", vi: "Main Line" },
+];
+const CUST_DEFECT_TYPES = [
+  { id: "stn", ko: "멍(STN)", vi: "Vết mờ (STN)" },
+  { id: "ptc", ko: "흑점(PTC)", vi: "Đốm đen (PTC)" },
+  { id: "entry", ko: "진입", vi: "Lỗi nhập" },
+  { id: "resolution", ko: "해상도", vi: "Độ phân giải" },
+  { id: "sensor", ko: "센서", vi: "Cảm biến" },
+  { id: "etc", ko: "기타", vi: "Khác" },
+];
 
 /* ----------------------------- utils --------------------------------- */
 function pad2(n) { return String(n).padStart(2, "0"); }
@@ -640,6 +694,10 @@ const STATE = {
   editing: null,        // { collection, id } currently loaded into the PM/Rework/Shipment form
   targetsEditing: false,
   dbReady: false,        // true once the server has answered at least once
+  custDivisionValue: "assy",
+  custSiteValue: "SEVT",
+  custInputValue: "",
+  custDefectRows: [{ type: "stn", count: "" }],
 };
 
 const CACHE = {
@@ -651,6 +709,7 @@ const CACHE = {
   targets: {},               // {normal, decap, pm_<caseId>, ...}
   report: { comment: "" },
   reportHistory: [],          // [{id(date), ...snapshot}]
+  customerInput: [],           // [{id, date, division, site, input, defects:[{type,count}]}]
 };
 
 let pollTimer = null;
@@ -710,6 +769,7 @@ async function refreshFromServer(preserveForm) {
     CACHE.targets = data.targets || {};
     CACHE.report = data.report || { comment: "" };
     CACHE.reportHistory = data.reportHistory || [];
+    CACHE.customerInput = data.customerInput || [];
     STATE.dbReady = true;
   } catch (e) {
     STATE.dbReady = false;
@@ -859,6 +919,37 @@ function aggShipment() {
   return { byType, grand, lastDate };
 }
 
+/* 고객사(SEVT) 라인 투입 현황 집계: 구분별 누적 Input/불량유형별 누적,
+   전체 중 가장 최근 입력일, 그리고 그 날짜의 구분별 Input(해당일 값만). */
+function aggCustomerInput() {
+  const byDiv = {};
+  CUST_DIVISIONS.forEach((d) => {
+    const defects = {};
+    CUST_DEFECT_TYPES.forEach((t) => { defects[t.id] = 0; });
+    byDiv[d.id] = { input: 0, defects, ngTotal: 0, lastDate: null, site: "" };
+  });
+  let overallLastDate = null;
+  CACHE.customerInput.forEach((rec) => {
+    const b = byDiv[rec.division];
+    if (!b) return;
+    b.input += Number(rec.input) || 0;
+    b.site = rec.site || b.site;
+    (rec.defects || []).forEach((d) => {
+      if (b.defects[d.type] !== undefined) b.defects[d.type] += Number(d.count) || 0;
+      b.ngTotal += Number(d.count) || 0;
+    });
+    if (!b.lastDate || rec.date > b.lastDate) b.lastDate = rec.date;
+    if (!overallLastDate || rec.date > overallLastDate) overallLastDate = rec.date;
+  });
+  // 보고용 "Input(최종입력일)" 칸: 전체 기준 최신 날짜에 그 구분이 실제로 입력했을 때만 값을 보여줍니다.
+  const latestByDiv = {};
+  CUST_DIVISIONS.forEach((d) => {
+    const rec = CACHE.customerInput.find((r) => r.division === d.id && r.date === overallLastDate);
+    latestByDiv[d.id] = rec ? (Number(rec.input) || 0) : null;
+  });
+  return { byDiv, overallLastDate, latestByDiv };
+}
+
 /* ----------------------------- render root ------------------------------- */
 function render() {
   const app = document.getElementById("app");
@@ -916,6 +1007,7 @@ function renderInputView() {
     ["pm", t("cat_pm")],
     ["rework", t("cat_rework")],
     ["shipment", t("cat_shipment")],
+    ["custinput", t("cat_custinput")],
   ];
   return `
     <div class="section">
@@ -943,6 +1035,7 @@ function renderInputForm() {
     case "pm": return renderPmForm();
     case "rework": return renderReworkForm();
     case "shipment": return renderShipmentForm();
+    case "custinput": return renderCustInputForm();
     default: return "";
   }
 }
@@ -1166,6 +1259,87 @@ function renderShipmentEntryList(entries) {
     </table>
   </div>`;
 }
+
+/* ---- 고객사(SEVT) 라인 투입 현황 ---- */
+function renderCustInputForm() {
+  const editingRec = STATE.editing && STATE.editing.collection === "customerInput"
+    ? CACHE.customerInput.find(r => r.id === STATE.editing.id) : null;
+  const currentDivision = editingRec ? editingRec.division : (STATE.custDivisionValue || "assy");
+  const currentSite = STATE.custSiteValue || "SEVT";
+  const currentInput = editingRec ? editingRec.input : (STATE.custInputValue ?? "");
+  const rows = (STATE.custDefectRows && STATE.custDefectRows.length) ? STATE.custDefectRows : [{ type: "stn", count: "" }];
+  const todaysEntries = CACHE.customerInput.filter(r => r.date === STATE.selectedDate);
+
+  return `
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+      <h3 style="font-size:14px;">${t("cat_custinput")} — ${STATE.selectedDate}</h3>
+      ${editingRec ? `<span class="pill warn">${t("editing_badge")}</span>` : ""}
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>${t("field_division")}</label>
+        <select id="custDivisionSelect" ${editingRec ? "disabled" : ""}>
+          ${CUST_DIVISIONS.map(d => `<option value="${d.id}" ${d.id === currentDivision ? "selected" : ""}>${localName(d)}</option>`).join("")}
+        </select>
+      </div>
+      <div class="field">
+        <label>SITE</label>
+        <input type="text" id="custSiteInput" value="${currentSite}">
+      </div>
+      <div class="field"><label>${t("field_cust_input")}</label><input type="number" min="0" id="custInputQty" value="${currentInput}"></div>
+    </div>
+    <div class="field-row" style="margin-top:12px;">
+      <label style="font-size:12.5px;font-weight:600;color:var(--ink-soft);width:100%;">${t("field_defect_type")} / ${t("field_defect_count")}</label>
+    </div>
+    ${rows.map((row, i) => `
+      <div class="field-row" style="margin-top:${i === 0 ? "4" : "8"}px;align-items:flex-end;">
+        <div class="field">
+          <select class="custDefectType" data-idx="${i}">
+            ${CUST_DEFECT_TYPES.map(dt => `<option value="${dt.id}" ${dt.id === row.type ? "selected" : ""}>${localName(dt)}</option>`).join("")}
+          </select>
+        </div>
+        <div class="field"><input type="number" min="0" class="custDefectCount" data-idx="${i}" value="${row.count ?? ""}" placeholder="${t("field_defect_count")}"></div>
+        ${rows.length > 1 ? `<button class="btn small danger" data-action="remove-defect-row" data-idx="${i}" style="height:38px;">${t("remove_btn")}</button>` : ""}
+      </div>`).join("")}
+    <div style="margin-top:10px;">
+      <button class="btn small" data-action="add-defect-row">${t("add_defect_type_btn")}</button>
+    </div>
+    <div style="margin-top:14px;display:flex;gap:8px;">
+      <button class="btn primary" data-action="save-custinput">${editingRec ? t("save_edit_btn") : t("save_new_btn")}</button>
+      ${editingRec ? `<button class="btn ghost" data-action="reset-form" data-collection="customerInput">${t("reset_btn")}</button>` : ""}
+    </div>
+  </div>
+  ${renderCustInputEntryList(todaysEntries)}
+  `;
+}
+
+function renderCustInputEntryList(entries) {
+  if (!entries.length) return `<div class="card" style="margin-top:12px;"><div class="empty-row">${t("no_entries")}</div></div>`;
+  return `<div class="card" style="margin-top:12px;overflow-x:auto;">
+    <div class="muted" style="margin-bottom:8px;">${t("existing_entries")}</div>
+    <table class="entry-table">
+      <thead><tr><th>${t("field_division")}</th><th>SITE</th><th>${t("field_cust_input")}</th><th>${t("field_defect_type")}</th><th></th></tr></thead>
+      <tbody>
+      ${entries.map(rec => {
+        const dv = caseById(CUST_DIVISIONS, rec.division);
+        const defectsStr = (rec.defects || []).filter(d => Number(d.count) > 0).map(d => {
+          const dt = caseById(CUST_DEFECT_TYPES, d.type);
+          return `${dt ? localName(dt) : d.type} ${numFmt(d.count)}`;
+        }).join(", ") || "-";
+        return `<tr>
+          <td>${dv ? localName(dv) : rec.division}</td>
+          <td>${rec.site || ""}</td>
+          <td>${numFmt(rec.input)}</td>
+          <td>${defectsStr}</td>
+          <td><button class="btn small" data-edit-collection="customerInput" data-edit-id="${rec.id}">${t("edit_btn")}</button>
+              <button class="btn small danger" data-del-collection="customerInput" data-del-id="${rec.id}">${t("delete_btn")}</button></td>
+        </tr>`;
+      }).join("")}
+      </tbody>
+    </table>
+  </div>`;
+}
 /* ============================ Summary view =============================== */
 function shipmentTableHtml(ship, cls, includeRatio, headerOverrides) {
   const ho = headerOverrides || {};
@@ -1190,12 +1364,39 @@ function renderShipmentSummaryTable(ship) {
   return `<div class="card" style="overflow-x:auto;">${shipmentTableHtml(ship, "entry-table", true)}</div>`;
 }
 
+function renderCustInputSummaryTable(custInput) {
+  const ppm = (count, input) => input > 0 ? numFmt(Math.round((count / input) * 1000000)) : "0";
+  return `<div class="card" style="overflow-x:auto;">
+    <table class="entry-table">
+      <thead><tr>
+        <th>${t("field_division")}</th>
+        <th>${t("custinput_cumulative")}</th>
+        <th>${t("custinput_ng_cumulative")}</th>
+        ${CUST_DEFECT_TYPES.map(dt => `<th>${localName(dt)}</th>`).join("")}
+      </tr></thead>
+      <tbody>
+      ${CUST_DIVISIONS.map(d => {
+        const b = custInput.byDiv[d.id];
+        return `<tr>
+          <td>${localName(d)}</td>
+          <td>${numFmt(b.input)}</td>
+          <td>${numFmt(b.ngTotal)} (${ppm(b.ngTotal, b.input)})</td>
+          ${CUST_DEFECT_TYPES.map(dt => `<td>${numFmt(b.defects[dt.id])} (${ppm(b.defects[dt.id], b.input)})</td>`).join("")}
+        </tr>`;
+      }).join("")}
+      </tbody>
+    </table>
+    <div class="hint" style="margin-top:8px;">${t("custinput_unit_ppm")}</div>
+  </div>`;
+}
+
 function renderSummaryView() {
   const prodNormal = aggProduction(CACHE.production_normal);
   const prodDecap = aggProduction(CACHE.production_decap);
   const pmByCase = aggPmSelectionByCase();
   const rwByCase = aggSortReworkByCase();
   const ship = aggShipment();
+  const custInput = aggCustomerInput();
   const targets = CACHE.targets || {};
   const decapTarget = (Number(targets.decap) || 0) + pmCumulativeLt23(pmByCase);
 
@@ -1236,6 +1437,11 @@ function renderSummaryView() {
   <div class="section">
     <div class="section-head"><h2>${t("cat_shipment")}</h2><span class="muted">${t("last_updated")}: ${ship.lastDate ? fmtDateShort(ship.lastDate, STATE.lang) : t("no_data_yet")}</span></div>
     ${renderShipmentSummaryTable(ship)}
+  </div>
+
+  <div class="section">
+    <div class="section-head"><h2>${t("cat_custinput")}</h2><span class="muted">${t("last_updated")}: ${custInput.overallLastDate ? fmtDateShort(custInput.overallLastDate, STATE.lang) : t("no_data_yet")}</span></div>
+    ${renderCustInputSummaryTable(custInput)}
   </div>
   `;
 }
@@ -1479,6 +1685,33 @@ function computeReportMetrics() {
   };
 }
 
+function renderCustInputReportTable(rc) {
+  const ci = aggCustomerInput();
+  const dateLabel = ci.overallLastDate ? fmtDateShort(ci.overallLastDate, STATE.lang) : "-";
+  return `<table class="rpt-ship rpt-cust" style="table-layout:fixed;">
+    <colgroup><col style="width:16%"><col style="width:17%"><col style="width:17%"><col style="width:50%"></colgroup>
+    <thead><tr>
+      <th>${t("field_division")}</th>
+      <th>${t("custinput_cumulative")}</th>
+      <th>${t("custinput_latest")} (${dateLabel})</th>
+      <th>${t("report_comment")}</th>
+    </tr></thead>
+    <tbody>
+    ${CUST_DIVISIONS.map((d) => {
+      const b = ci.byDiv[d.id];
+      const latest = ci.latestByDiv[d.id];
+      const key = "cust_" + d.id;
+      return `<tr>
+        <td>${localName(d)}</td>
+        <td>${numFmt(b.input)}</td>
+        <td>${latest === null ? "-" : numFmt(latest)}</td>
+        ${rc(key)}
+      </tr>`;
+    }).join("")}
+    </tbody>
+  </table>`;
+}
+
 function renderReportView() {
   const m = computeReportMetrics();
   const {
@@ -1550,6 +1783,9 @@ function renderReportView() {
 
       <div class="rpt-h">${t("report_shipment_section")}</div>
       ${shipmentTableHtml(ship, "rpt-ship", true, { resort67: t("report_label_resort67"), sortrw: t("report_rework_section") })}
+
+      <div class="rpt-h" style="margin-top:16px;">${t("report_custinput_title")}</div>
+      ${renderCustInputReportTable(rc)}
     </div>
     </div>
 
@@ -1599,11 +1835,19 @@ function handleClick(e) {
   if (navBtn) { STATE.view = navBtn.dataset.nav; STATE.editing = null; render(); return; }
 
   const catBtn = e.target.closest("[data-cat]");
-  if (catBtn) { STATE.inputCategory = catBtn.dataset.cat; STATE.editing = null; render(); return; }
+  if (catBtn) { STATE.inputCategory = catBtn.dataset.cat; STATE.editing = null; STATE.custDefectRows = [{ type: "stn", count: "" }]; STATE.custInputValue = ""; render(); return; }
 
   const editBtn = e.target.closest("[data-edit-collection]");
   if (editBtn) {
     STATE.editing = { collection: editBtn.dataset.editCollection, id: editBtn.dataset.editId };
+    if (editBtn.dataset.editCollection === "customerInput") {
+      const rec = CACHE.customerInput.find((r) => r.id === editBtn.dataset.editId);
+      if (rec) {
+        STATE.custDivisionValue = rec.division;
+        STATE.custSiteValue = rec.site || "SEVT";
+        STATE.custDefectRows = (rec.defects && rec.defects.length) ? rec.defects.map((d) => ({ type: d.type, count: String(d.count) })) : [{ type: CUST_DEFECT_TYPES[0].id, count: "" }];
+      }
+    }
     render();
     return;
   }
@@ -1637,6 +1881,8 @@ function handleChange(e) {
   if (e.target.id === "dateInput") {
     STATE.selectedDate = e.target.value;
     STATE.editing = null;
+    STATE.custDefectRows = [{ type: "stn", count: "" }];
+    STATE.custInputValue = "";
     render();
     return;
   }
@@ -1672,6 +1918,22 @@ async function saveRecord(collection, newId, data) {
   if (clash) {
     showModal({ title: t("confirm_title"), body: t("confirm_overwrite"), confirmText: t("confirm_overwrite_btn"), cancelText: t("cancel_btn"), onConfirm: run });
   } else { await run(); }
+}
+
+/* Reads the currently-typed 불량유형/불량수 rows from the DOM back into
+   STATE before we add/remove a row or save, so nothing the person already
+   filled in gets lost. */
+function syncCustDefectRowsFromDom() {
+  const types = document.querySelectorAll(".custDefectType");
+  if (!types.length) return;
+  const rows = [];
+  types.forEach((sel) => {
+    const idx = Number(sel.dataset.idx);
+    const countEl = document.querySelector(`.custDefectCount[data-idx="${idx}"]`);
+    rows[idx] = { type: sel.value, count: countEl ? countEl.value : "" };
+  });
+  STATE.custDefectRows = rows.filter(Boolean);
+  if (!STATE.custDefectRows.length) STATE.custDefectRows = [{ type: "stn", count: "" }];
 }
 
 async function handleAction(action, btn) {
@@ -1749,7 +2011,43 @@ async function handleAction(action, btn) {
     return;
   }
 
-  if (action === "reset-form") { STATE.editing = null; render(); return; }
+  if (action === "add-defect-row" || action === "remove-defect-row") {
+    syncCustDefectRowsFromDom();
+    // the row add/remove re-renders the whole form locally, so persist the
+    // other fields first or the person's division/SITE/Input would reset
+    const divEl = document.getElementById("custDivisionSelect");
+    const siteEl = document.getElementById("custSiteInput");
+    const inputEl = document.getElementById("custInputQty");
+    if (divEl) STATE.custDivisionValue = divEl.value;
+    if (siteEl) STATE.custSiteValue = siteEl.value;
+    if (inputEl) STATE.custInputValue = inputEl.value;
+    if (action === "add-defect-row") {
+      STATE.custDefectRows.push({ type: "stn", count: "" });
+    } else {
+      const idx = Number(btn.dataset.idx);
+      if (STATE.custDefectRows.length > 1) STATE.custDefectRows.splice(idx, 1);
+    }
+    render();
+    return;
+  }
+
+  if (action === "save-custinput") {
+    syncCustDefectRowsFromDom();
+    const division = document.getElementById("custDivisionSelect").value;
+    const site = document.getElementById("custSiteInput").value.trim() || "SEVT";
+    const input = Number(document.getElementById("custInputQty").value) || 0;
+    STATE.custDivisionValue = division; STATE.custSiteValue = site; STATE.custInputValue = "";
+    const defects = STATE.custDefectRows
+      .map((r) => ({ type: r.type, count: Number(r.count) || 0 }))
+      .filter((r) => r.count > 0);
+    const newId = `${STATE.selectedDate}__${division}`;
+    const data = { date: STATE.selectedDate, division, site, input, defects, updatedAt: new Date().toISOString() };
+    STATE.custDefectRows = [{ type: "stn", count: "" }];
+    await saveRecord("customerInput", newId, data);
+    return;
+  }
+
+  if (action === "reset-form") { STATE.editing = null; STATE.custDefectRows = [{ type: "stn", count: "" }]; STATE.custInputValue = ""; render(); return; }
 
   if (action === "toggle-targets") { STATE.targetsEditing = !STATE.targetsEditing; render(); return; }
 
@@ -1884,6 +2182,21 @@ async function exportExcel() {
       };
     });
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(shipRows), "출하실적");
+
+    const custRows = [];
+    CACHE.customerInput.slice().sort((a, b) => (a.date || "").localeCompare(b.date || "")).forEach((r) => {
+      const dv = caseById(CUST_DIVISIONS, r.division);
+      const rowBase = { date: r.date, division: dv ? dv.ko : r.division, site: r.site || "", input: r.input || 0 };
+      if (!r.defects || !r.defects.length) {
+        custRows.push({ ...rowBase, defectType: "", defectCount: 0 });
+      } else {
+        r.defects.forEach((d) => {
+          const dt = caseById(CUST_DEFECT_TYPES, d.type);
+          custRows.push({ ...rowBase, defectType: dt ? dt.ko : d.type, defectCount: d.count || 0 });
+        });
+      }
+    });
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(custRows), "고객사투입현황");
 
     const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
     const blob = new Blob([wbout], { type: "application/octet-stream" });

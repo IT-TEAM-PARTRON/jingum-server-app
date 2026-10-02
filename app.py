@@ -32,8 +32,7 @@ SEED_PATH = BASE_DIR / "seed_data.json"
 STATIC_FILE = "index.html"
 PORT = int(os.environ.get("PORT", 8000))
 
-# 정적 파일은 static/ 폴더만 공개합니다 (data.db, app.py 등은 외부에 노출되지 않음)
-app = Flask(__name__, static_folder=str(BASE_DIR / "static"), static_url_path="/static")
+app = Flask(__name__, static_folder=str(BASE_DIR), static_url_path="")
 
 
 def get_conn():
@@ -97,6 +96,7 @@ def api_all():
         "targets": {},
         "report": {"comment": ""},
         "reportHistory": [],
+        "customerInput": [],
     }
     for collection, doc_id, data_json in rows:
         data = json.loads(data_json)
@@ -116,6 +116,8 @@ def api_all():
             out["report"] = data
         elif collection == "reportHistory":
             out["reportHistory"].append({**data, "id": doc_id})
+        elif collection == "customerInput":
+            out["customerInput"].append({**data, "id": doc_id})
     return jsonify(out)
 
 
@@ -157,11 +159,8 @@ def api_delete():
     return jsonify({"ok": True})
 
 
-# 어떤 방식으로 실행하든(python app.py / waitress / gunicorn) 시작 시 한 번 테이블 생성 + 최초 데이터 적재
-get_conn().close()
-seed_if_empty()
-
-
 if __name__ == "__main__":
+    get_conn().close()  # 테이블 생성 보장
+    seed_if_empty()
     print(f"재검 진행 상황 트래킹 서버 시작 — http://0.0.0.0:{PORT} (사내망에서는 서버 IP:{PORT} 로 접속)")
     app.run(host="0.0.0.0", port=PORT, debug=False)
